@@ -20,6 +20,7 @@ namespace speech_to_windows_input
         public String[] PhraseList { get; set; } = { };
         public String PrioritizeLatencyOrAccuracy { get; set; } = "Latency";
         public bool SoundEffect { get; set; } = false;
+        public bool InputIncrementally { get; set; } = false;
     }
     public class SpeechRecognitionResult
     {
@@ -34,6 +35,7 @@ namespace speech_to_windows_input
         static bool loop = true; // mutex isn't necessary since both Main and Application.DoEvents (WinProc) is in the main thread.
         static bool keyHDown = false;
         static Task<SpeechRecognitionResult> task = null;
+        static String partialRecognizedText = "";
         // static void 
         static void Main(string[] args)
         {
@@ -86,8 +88,9 @@ namespace speech_to_windows_input
                 {
                     if (task.Result.ErrorMessage == null)
                     {
-                        Console.WriteLine($"Recognized Text: {task.Result.Text}");
-                        llc.Keyboard.SendText(task.Result.Text);
+                        Console.WriteLine($"Final Recognized Text: {task.Result.Text}");
+                        SendInput(task.Result.Text);
+                        partialRecognizedText = "";
                     }
                     else
                     {
@@ -143,6 +146,19 @@ namespace speech_to_windows_input
                 keyHDown = false;
             return false;
         }
+        private static String GetCommonPrefix(String s1, String s2)
+        {
+            int i, min = Math.Min(s1.Length, s2.Length);
+            for (i = 0; i < min && s1[i] == s2[i]; i++) { }
+            return s1.Substring(0, i);
+        }
+        private static void SendInput(String text)
+        {
+            String s = GetCommonPrefix(partialRecognizedText, text);
+            for (int i = 0; i < partialRecognizedText.Length - s.Length; i++)
+                llc.Keyboard.SendKey((int)Keys.Back);
+            llc.Keyboard.SendText(text.Substring(s.Length));
+        }
         private static void InitSpeechRecognizer()
         {
             // Creates an instance of a speech config with specified subscription key and service region.
@@ -154,6 +170,13 @@ namespace speech_to_windows_input
             PhraseListGrammar phraseListGrammar = PhraseListGrammar.FromRecognizer(speechRecognizer);
             foreach (var phrase in config.PhraseList)
                 phraseListGrammar.AddPhrase(phrase);
+            speechRecognizer.Recognizing += (s, e) => {
+                Console.WriteLine($"Partial Recognized Text: {e.Result.Text}");
+                if (!config.InputIncrementally)
+                    return;
+                SendInput(e.Result.Text);
+                partialRecognizedText = e.Result.Text;
+            };
         }
         private static async Task<SpeechRecognitionResult> SpeechToTextAsync()
         {

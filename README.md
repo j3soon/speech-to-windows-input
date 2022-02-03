@@ -21,7 +21,8 @@ Copy the Azure key and region text into the config file `config.json`.
   ],
   "PhraseList": [],
   "PrioritizeLatencyOrAccuracy": "Latency",
-  "SoundEffect": false
+  "SoundEffect": false,
+  "InputIncrementally": false
 }
 ```
 
@@ -33,6 +34,7 @@ Make sure to replace `<paste-your-subscription-key>` and `<paste-your-region>` t
 - `PhraseList`: A list of of custom phrases such as names, technical terms, etc. For an example, if you are a gamer that types `GG` (i.e., Good Game) a lot, you will want to add `GG` in this list. Otherwise, Azure will recognize it as `JuJu`, `Gigi`, etc.
 - `PrioritizeLatencyOrAccuracy`: Select the recognition mode between `"Latency"` and `"Accuracy"`.
 - `SoundEffect`: Determines whether the program should play a hint sound when the speech recognition starts/stops.
+- `InputIncrementally`: Determines whether the program should input incrementally (revise with backspace along the way), or simply input once when the recognition result is confirmed.
 
 ## Program Hint
 
@@ -51,7 +53,7 @@ Notes:
 
 Runtime:
 - If Unicode characters (e.g., Chinese) cannot be shown correctly, you should set the console font to support Unicode.
-- If you don't want your credit card be accidentally charged, set the Pricing Tier to `Free F0` instead of `Standard F0` (i.e., Pay as You Go). The free tier has [5 hours audio quota each month](https://azure.microsoft.com/en-us/pricing/details/cognitive-services/speech-services/).
+- If you don't want your credit card be accidentally charged, set the Pricing Tier to `Free F0` instead of `Standard F0` (Pay as You Go). The free tier has [5 hours audio quota each month](https://azure.microsoft.com/en-us/pricing/details/cognitive-services/speech-services/), and will not charge you when exceeding the quota limit.
 
 Compilation:
 - `SpeechConfig.FromSubscription` will report `BadImageFormatException` if `AnyCPU` is used instead of `x86`/`x64`.
