@@ -22,7 +22,10 @@ Copy the Azure key and region text into the config file `config.json`.
   "PhraseList": [],
   "PrioritizeLatencyOrAccuracy": "Latency",
   "SoundEffect": false,
-  "InputIncrementally": false
+  "InputIncrementally": false,
+  "OutputForm": "Text",
+  "AutoPunctuation": true,
+  "DetailedLog": false
 }
 ```
 
@@ -35,6 +38,9 @@ Make sure to replace `<paste-your-subscription-key>` and `<paste-your-region>` t
 - `PrioritizeLatencyOrAccuracy`: Select the recognition mode between `"Latency"` and `"Accuracy"`.
 - `SoundEffect`: Determines whether the program should play a hint sound when the speech recognition starts/stops.
 - `InputIncrementally`: Determines whether the program should input incrementally (revise with backspace along the way), or simply input once when the recognition result is confirmed.
+- `OutputForm`: Select the recognition output, can be `"Text"`, `"Lexical"`, or `"Normalized"`. See the [output form details](https://docs.microsoft.com/en-us/dotnet/api/microsoft.cognitiveservices.speech.detailedspeechrecognitionresult?view=azure-dotnet) for more information.
+- `AutoPunctuation`: Determines whether to automatically insert punctuation.
+- `DetailedLog`: Determines whether to log confidence, recognized words, and other recognition details.
 
 ## Program Hint
 
@@ -71,7 +77,7 @@ Additional Features:
   Pre-define a list of languages. Azure Speech SDK will identify the languages used before starting speech recognition. (i.e., Language Detection -> Speech Recognition for that specific language). Speech recognition for mixed languages is not supported at the time of writing.
 - ✔️ [Recognizing custom phrases](https://docs.microsoft.com/en-us/dotnet/api/microsoft.cognitiveservices.speech.phraselistgrammar?view=azure-dotnet)
   Allows recognition of custom phrases such as names, technical terms, etc.
-- ❌ [Detailed results](https://docs.microsoft.com/en-us/dotnet/api/microsoft.cognitiveservices.speech.detailedspeechrecognitionresult?view=azure-dotnet)
+- ✔️ [Detailed results](https://docs.microsoft.com/en-us/dotnet/api/microsoft.cognitiveservices.speech.detailedspeechrecognitionresult?view=azure-dotnet), [[sample1]](https://github.com/Azure-Samples/cognitive-services-speech-sdk/issues/667), [[sample2]](https://stackoverflow.com/a/51190072)
   Reports the recognition confidence, and the actual words recognized.
 - ❌ [Continuous recognition](https://docs.microsoft.com/en-us/azure/cognitive-services/speech-service/get-started-speech-to-text?tabs=windowsinstall&pivots=programming-language-csharp#continuous-recognition)
   Instead of performing speech recognition until silence or reaching 15 seconds, let user choose when to stop the recognition.

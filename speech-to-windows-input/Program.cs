@@ -2,6 +2,7 @@
 using Microsoft.CognitiveServices.Speech.Audio;
 using System;
 using System.IO;
+using System.Linq;
 using System.Media;
 using System.Text.Json;
 using System.Threading;
@@ -21,8 +22,11 @@ namespace speech_to_windows_input
         public String PrioritizeLatencyOrAccuracy { get; set; } = "Latency";
         public bool SoundEffect { get; set; } = false;
         public bool InputIncrementally { get; set; } = false;
+        public String OutputForm { get; set; } = "Text"; // or "Lexical", or "Normalized"
+        public bool AutoPunctuation { get; set; } = true;
+        public bool DetailedLog { get; set; } = false;
     }
-    public class SpeechRecognitionResult
+    public class RecognitionResult
     {
         public String Text = null;
         public String ErrorMessage = null;
@@ -34,7 +38,7 @@ namespace speech_to_windows_input
         static SpeechRecognizer speechRecognizer;
         static bool loop = true; // mutex isn't necessary since both Main and Application.DoEvents (WinProc) is in the main thread.
         static bool keyHDown = false;
-        static Task<SpeechRecognitionResult> task = null;
+        static Task<RecognitionResult> task = null;
         static String partialRecognizedText = "";
         // static void 
         static void Main(string[] args)
@@ -155,6 +159,8 @@ namespace speech_to_windows_input
         private static void SendInput(String text)
         {
             String s = GetCommonPrefix(partialRecognizedText, text);
+            if (s.Length == text.Length)
+                return;
             for (int i = 0; i < partialRecognizedText.Length - s.Length; i++)
                 llc.Keyboard.SendKey((int)Keys.Back);
             llc.Keyboard.SendText(text.Substring(s.Length));
@@ -164,6 +170,14 @@ namespace speech_to_windows_input
             // Creates an instance of a speech config with specified subscription key and service region.
             var speechConfig = SpeechConfig.FromSubscription(config.AzureSubscriptionKey, config.AzureServiceRegion);
             speechConfig.SetProperty(PropertyId.SpeechServiceConnection_SingleLanguageIdPriority, config.PrioritizeLatencyOrAccuracy);
+            // Output detailed recognition results
+            speechConfig.OutputFormat = OutputFormat.Detailed;
+            // Don't filter bad words
+            speechConfig.SetProfanity(ProfanityOption.Raw);
+            if (!config.AutoPunctuation)
+                // Preview feature, mentioned here: https://github.com/Azure-Samples/cognitive-services-speech-sdk/issues/667#issuecomment-690840772
+                // Don't automatically insert punctuations
+                speechConfig.SetServiceProperty("punctuation", "explicit", ServicePropertyChannel.UriQueryParameter);
             var autoDetectSourceLanguageConfig = AutoDetectSourceLanguageConfig.FromLanguages(config.Languages);
             var audioConfig = AudioConfig.FromDefaultMicrophoneInput();
             speechRecognizer = new SpeechRecognizer(speechConfig, autoDetectSourceLanguageConfig, audioConfig);
@@ -178,7 +192,7 @@ namespace speech_to_windows_input
                 partialRecognizedText = e.Result.Text;
             };
         }
-        private static async Task<SpeechRecognitionResult> SpeechToTextAsync()
+        private static async Task<RecognitionResult> SpeechToTextAsync()
         {
             // Starts speech recognition, and returns after a single utterance is recognized. The end of a
             // single utterance is determined by listening for silence at the end or until a maximum of 15
@@ -187,12 +201,26 @@ namespace speech_to_windows_input
             // shot recognition like command or query. 
             // For long-running multi-utterance recognition, use StartContinuousRecognitionAsync() instead.
             var result = await speechRecognizer.RecognizeOnceAsync();
-            var ret = new SpeechRecognitionResult();
+            if (config.DetailedLog)
+                Console.WriteLine($"Detailed Result: {result}");
+            var detailedResult = result.Best().First();
+            var ret = new RecognitionResult();
 
             // Checks result.
             if (result.Reason == ResultReason.RecognizedSpeech)
             {
-                ret.Text = result.Text;
+                if (config.OutputForm == "Text")
+                    ret.Text = result.Text;
+                else if (config.OutputForm == "Lexical")
+                    ret.Text = detailedResult.LexicalForm;
+                else if (config.OutputForm == "Normalized")
+                    ret.Text = detailedResult.NormalizedForm;
+                else
+                {
+                    var msg = $"CONFIG ERROR: OutputForm cannot be set to: \"{config.OutputForm}\"";
+                    Console.WriteLine(msg);
+                    ret.Text = msg;
+                }
             }
             else if (result.Reason == ResultReason.NoMatch)
             {
