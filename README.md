@@ -22,7 +22,7 @@ Copy the Azure key and region text into the config file `config.json`.
   "PhraseList": [],
   "PrioritizeLatencyOrAccuracy": "Latency",
   "SoundEffect": false,
-  "InputIncrementally": false,
+  "InputIncrementally": true,
   "OutputForm": "Text",
   "AutoPunctuation": true,
   "DetailedLog": false

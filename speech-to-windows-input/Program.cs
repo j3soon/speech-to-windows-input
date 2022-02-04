@@ -1,6 +1,7 @@
 ﻿using Microsoft.CognitiveServices.Speech;
 using Microsoft.CognitiveServices.Speech.Audio;
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Media;
@@ -21,15 +22,10 @@ namespace speech_to_windows_input
         public String[] PhraseList { get; set; } = { };
         public String PrioritizeLatencyOrAccuracy { get; set; } = "Latency";
         public bool SoundEffect { get; set; } = false;
-        public bool InputIncrementally { get; set; } = false;
+        public bool InputIncrementally { get; set; } = true;
         public String OutputForm { get; set; } = "Text"; // or "Lexical", or "Normalized"
         public bool AutoPunctuation { get; set; } = true;
         public bool DetailedLog { get; set; } = false;
-    }
-    public class RecognitionResult
-    {
-        public String Text = null;
-        public String ErrorMessage = null;
     }
     class Program
     {
@@ -38,7 +34,8 @@ namespace speech_to_windows_input
         static SpeechRecognizer speechRecognizer;
         static bool loop = true; // mutex isn't necessary since both Main and Application.DoEvents (WinProc) is in the main thread.
         static bool keyHDown = false;
-        static Task<RecognitionResult> task = null;
+        static bool recognizing = false;
+        static bool cancelling = false;
         static String partialRecognizedText = "";
         // static void 
         static void Main(string[] args)
@@ -85,26 +82,7 @@ namespace speech_to_windows_input
             // Message Loop with Windows.Forms for simplicity (instead of custom WindowProc callback)
             while (loop)
             {
-                // Deal with Low Level Hooks Callback
-                Application.DoEvents();
-                // Deal with Speech Recognition Result
-                if (task != null && task.IsCompleted)
-                {
-                    if (task.Result.ErrorMessage == null)
-                    {
-                        Console.WriteLine($"Final Recognized Text: {task.Result.Text}");
-                        SendInput(task.Result.Text);
-                        partialRecognizedText = "";
-                    }
-                    else
-                    {
-                        Console.WriteLine($"Error: {task.Result.ErrorMessage}");
-                    }
-                    task = null;
-                    Console.WriteLine($"[{DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss")}] Speech Recognition Done");
-                    if (config.SoundEffect)
-                        SystemSounds.Exclamation.Play();
-                }
+                Application.DoEvents(); // Deal with Low Level Hooks Callback
                 Thread.Sleep(1);
             }
             // Uninstall Ketboard Hook
@@ -121,27 +99,39 @@ namespace speech_to_windows_input
             {
                 keyHDown = true;
                 if (llc.Keyboard.IsKeyDown((int)Keys.LWin) || llc.Keyboard.IsKeyDown((int)Keys.RWin)) {
-                    if (task != null)
-                        return false;
-                    if (task == null)
+                    if (!recognizing)
                     {
                         Console.WriteLine($"[{DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss")}] Speech Recognition Started");
                         if (config.SoundEffect)
                             SystemSounds.Exclamation.Play();
-                        task = SpeechToTextAsync();
+                        cancelling = false;
+                        recognizing = true;
+                        // Starts speech recognition, and returns after a single utterance is recognized. The end of a
+                        // single utterance is determined by listening for silence at the end or until a maximum of 15
+                        // seconds of audio is processed.  The task returns the recognition text as result. 
+                        // Note: Since RecognizeOnceAsync() returns only a single utterance, it is suitable only for single
+                        // shot recognition like command or query. 
+                        // For long-running multi-utterance recognition, use StartContinuousRecognitionAsync() instead.
+                        speechRecognizer.RecognizeOnceAsync();
+                    }
+                    else
+                    {
+                        Console.WriteLine($"[{DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss")}] Speech Recognition Early Stopping...");
+                        speechRecognizer.StopContinuousRecognitionAsync();
                     }
                     return true;
                 }
             }
-            /*else if (vkCode == (uint)Keys.Escape)
+            else if (vkCode == (uint)Keys.Escape)
             {
-                if (task != null)
+                if (recognizing)
                 {
-                    cancelled = true;
-                    Console.WriteLine($"[{DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss")}] Speech Recognition Cancelled");
+                    cancelling = true;
+                    Console.WriteLine($"[{DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss")}] Speech Recognition Cancelling...");
+                    speechRecognizer.StopContinuousRecognitionAsync();
                     return true;
                 }
-            }*/
+            }
             return false;
         }
         private static bool kbdHook_KeyUpEvent(llc.KeyboardHook sender, uint vkCode, bool injected)
@@ -158,6 +148,8 @@ namespace speech_to_windows_input
         }
         private static void SendInput(String text)
         {
+            if (cancelling)
+                return;
             String s = GetCommonPrefix(partialRecognizedText, text);
             if (s.Length == text.Length)
                 return;
@@ -191,54 +183,62 @@ namespace speech_to_windows_input
                 SendInput(e.Result.Text);
                 partialRecognizedText = e.Result.Text;
             };
-        }
-        private static async Task<RecognitionResult> SpeechToTextAsync()
-        {
-            // Starts speech recognition, and returns after a single utterance is recognized. The end of a
-            // single utterance is determined by listening for silence at the end or until a maximum of 15
-            // seconds of audio is processed.  The task returns the recognition text as result. 
-            // Note: Since RecognizeOnceAsync() returns only a single utterance, it is suitable only for single
-            // shot recognition like command or query. 
-            // For long-running multi-utterance recognition, use StartContinuousRecognitionAsync() instead.
-            var result = await speechRecognizer.RecognizeOnceAsync();
-            if (config.DetailedLog)
-                Console.WriteLine($"Detailed Result: {result}");
-            var detailedResult = result.Best().First();
-            var ret = new RecognitionResult();
+            speechRecognizer.Recognized += (s, e) => {
+                var result = e.Result;
+                String Text = null, ErrorMessage = null;
+                if (config.DetailedLog)
+                    Console.WriteLine($"Detailed Result: {result}");
+                recognizing = false;
+                // Checks result.
+                if (result.Reason == ResultReason.RecognizedSpeech)
+                {
+                    var detailedResult = result.Best().First();
+                    if (config.OutputForm == "Text")
+                        Text = result.Text;
+                    else if (config.OutputForm == "Lexical")
+                        Text = detailedResult.LexicalForm;
+                    else if (config.OutputForm == "Normalized")
+                        Text = detailedResult.NormalizedForm;
+                    else
+                    {
+                        var msg = $"CONFIG ERROR: OutputForm cannot be set to: \"{config.OutputForm}\"";
+                        Console.WriteLine(msg);
+                        Text = msg;
+                    }
+                }
+                else if (result.Reason == ResultReason.NoMatch)
+                {
+                    ErrorMessage = $"NOMATCH: Speech could not be recognized.";
+                }
+                else if (result.Reason == ResultReason.Canceled)
+                {
+                    var cancellation = CancellationDetails.FromResult(result);
+                    ErrorMessage = $"CANCELED: Reason={cancellation.Reason}";
 
-            // Checks result.
-            if (result.Reason == ResultReason.RecognizedSpeech)
-            {
-                if (config.OutputForm == "Text")
-                    ret.Text = result.Text;
-                else if (config.OutputForm == "Lexical")
-                    ret.Text = detailedResult.LexicalForm;
-                else if (config.OutputForm == "Normalized")
-                    ret.Text = detailedResult.NormalizedForm;
+                    if (cancellation.Reason == CancellationReason.Error)
+                    {
+                        ErrorMessage += $"\nCANCELED: ErrorCode={cancellation.ErrorCode}";
+                        ErrorMessage += $"\nCANCELED: ErrorDetails={cancellation.ErrorDetails}";
+                        ErrorMessage += $"\nCANCELED: Did you update the subscription info?";
+                    }
+                }
+                if (ErrorMessage == null)
+                {
+                    Console.WriteLine($"Final Recognized Text: {Text}");
+                    SendInput(Text);
+                    partialRecognizedText = "";
+                }
                 else
                 {
-                    var msg = $"CONFIG ERROR: OutputForm cannot be set to: \"{config.OutputForm}\"";
-                    Console.WriteLine(msg);
-                    ret.Text = msg;
+                    Console.WriteLine($"Error: {ErrorMessage}");
                 }
-            }
-            else if (result.Reason == ResultReason.NoMatch)
-            {
-                ret.ErrorMessage = $"NOMATCH: Speech could not be recognized.";
-            }
-            else if (result.Reason == ResultReason.Canceled)
-            {
-                var cancellation = CancellationDetails.FromResult(result);
-                ret.ErrorMessage = $"CANCELED: Reason={cancellation.Reason}";
-
-                if (cancellation.Reason == CancellationReason.Error)
-                {
-                    ret.ErrorMessage += $"\nCANCELED: ErrorCode={cancellation.ErrorCode}";
-                    ret.ErrorMessage += $"\nCANCELED: ErrorDetails={cancellation.ErrorDetails}";
-                    ret.ErrorMessage += $"\nCANCELED: Did you update the subscription info?";
-                }
-            }
-            return ret;
+                if (config.SoundEffect)
+                    SystemSounds.Exclamation.Play();
+                if (!cancelling)
+                    Console.WriteLine($"[{DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss")}] Speech Recognition Done");
+                else
+                    Console.WriteLine($"[{DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss")}] Speech Recognition Cancelled");
+            };
         }
     }
 }
