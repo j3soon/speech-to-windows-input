@@ -3,10 +3,12 @@ using Microsoft.CognitiveServices.Speech.Audio;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Media;
+using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Threading;
 using System.Windows.Forms;
@@ -211,6 +213,59 @@ namespace speech_to_windows_input
                 return;
             inputQueue.Enqueue(new Tuple<String, String>(partialRecognizedText, text));
         }
+        private static llc.Natives.INPUT getInput(int key, bool down, bool unicode = false)
+        {
+            llc.Natives.INPUT input = new llc.Natives.INPUT
+            {
+                type = llc.Natives.INPUTTYPE.INPUT_KEYBOARD,
+            };
+            if (unicode)
+            {
+                input.mkhi.ki = new llc.Natives.KEYBDINPUT
+                {
+                    wVk = 0,
+                    wScan = (ushort)key,
+                    dwFlags = (uint)llc.Natives.KEYEVENTF.UNICODE | (uint)(down ? llc.Natives.KEYEVENTF.KEYDOWN : llc.Natives.KEYEVENTF.KEYUP),
+                    time = 0,
+                    dwExtraInfo = IntPtr.Zero
+                };
+                return input;
+            }
+            input.mkhi.ki = new llc.Natives.KEYBDINPUT
+            {
+                wVk = (ushort)key,
+                wScan = 0,
+                dwFlags = (uint)(down ? llc.Natives.KEYEVENTF.KEYDOWN : llc.Natives.KEYEVENTF.KEYUP),
+                time = 0,
+                dwExtraInfo = IntPtr.Zero
+            };
+            return input;
+        }
+        [DllImport("user32.dll", SetLastError = true)]
+        static extern uint SendInput(uint nInputs, llc.Natives.INPUT[] pInputs, int cbSize);
+        private static void SendBackspaceAndText(int backSpaces, String text)
+        {
+            int len = 2 * text.Length;
+            if (backSpaces > 0)
+                len += backSpaces + 1;
+            var inputs = new llc.Natives.INPUT[len];
+            int textBegin = 0;
+            if (backSpaces > 0)
+            {
+                for (int i = 0; i < backSpaces; i++)
+                    inputs[i] = getInput((int)Keys.Back, true);
+                textBegin = backSpaces + 1;
+                inputs[textBegin-1] = getInput((int)Keys.Back, false);
+            }
+            for (int i = 0; i < text.Length; i++)
+            {
+                inputs[textBegin + 2 * i] = getInput(text[i], true, true);
+                inputs[textBegin + 2 * i + 1] = getInput(text[i], false, true);
+            }
+            uint sent = SendInput((uint)len, inputs, Marshal.SizeOf(typeof(llc.Natives.INPUT)));
+            if (sent != len)
+                throw new Win32Exception(Marshal.GetLastWin32Error());
+        }
         private static void SendInput()
         {
             while (true)
@@ -228,12 +283,13 @@ namespace speech_to_windows_input
                     continue;
                 }
                 String s = GetCommonPrefix(tuple.Item1, tuple.Item2);
-                for (int i = 0; i < tuple.Item1.Length - s.Length; i++)
-                    llc.Keyboard.SendKeyDown((int)Keys.Back);
-                if (tuple.Item1.Length - s.Length > 0)
-                    llc.Keyboard.SendKeyUp((int)Keys.Back);
+                int backSpaces = 0;
+                String text = "";
                 if (s.Length < tuple.Item2.Length)
-                    llc.Keyboard.SendText(tuple.Item2.Substring(s.Length));
+                    text = tuple.Item2.Substring(s.Length);
+                if (tuple.Item1.Length - s.Length > 0)
+                    backSpaces = tuple.Item1.Length - s.Length;
+                SendBackspaceAndText(backSpaces, text);
             }
         }
         private static void InitSpeechRecognizer()
