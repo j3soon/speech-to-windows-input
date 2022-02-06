@@ -247,15 +247,17 @@ namespace speech_to_windows_input
         {
             int len = 2 * text.Length;
             if (backSpaces > 0)
-                len += backSpaces + 1;
+                len += 2 * backSpaces;
             var inputs = new llc.Natives.INPUT[len];
             int textBegin = 0;
             if (backSpaces > 0)
             {
                 for (int i = 0; i < backSpaces; i++)
-                    inputs[i] = getInput((int)Keys.Back, true);
-                textBegin = backSpaces + 1;
-                inputs[textBegin-1] = getInput((int)Keys.Back, false);
+                {
+                    inputs[2 * i] = getInput((int)Keys.Back, true);
+                    inputs[2 * i + 1] = getInput((int)Keys.Back, false);
+                }
+                textBegin = 2 * backSpaces;
             }
             for (int i = 0; i < text.Length; i++)
             {
