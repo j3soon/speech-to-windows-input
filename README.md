@@ -40,7 +40,8 @@ Note: If your current input language is set to Chinese, you can select character
   "DetailedLog": false,
   "ContinuousRecognition": false,
   "TotalTimeoutMS": 60000,
-  "UseMenuKey": false
+  "UseMenuKey": false,
+  "SendTrailingEnter": false
 }
 ```
 
