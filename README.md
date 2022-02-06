@@ -1,4 +1,4 @@
-# Speech to Windows Input
+# Speech to Windows Input (STWI)
 
 ## How to Use
 
@@ -69,13 +69,8 @@ Compilation:
 - `SpeechConfig.FromSubscription` will report `BadImageFormatException` if `AnyCPU` is used instead of `x86`/`x64`.
 - Must compile with `x86` config since LowLevelControls [does not work in x64 config](https://github.com/j3soon/LowLevelControls/issues/1).
 
-## References
+## Features:
 
-Minimal Sample:
-- [Quickstart: Recognize speech from a microphone in C# under .NET Framework for Windows](https://github.com/Azure-Samples/cognitive-services-speech-sdk/tree/master/quickstart/csharp/dotnet/from-microphone)
-- [Get started with speech-to-text](https://docs.microsoft.com/en-us/azure/cognitive-services/speech-service/get-started-speech-to-text?pivots=programming-language-csharp&tabs=windowsinstall)
-
-Additional Features:
 (✔️ means implemented, ❌ means not)
 - ✔️ [Automatic language detection](https://docs.microsoft.com/en-us/azure/cognitive-services/speech-service/how-to-automatic-language-detection?pivots=programming-language-csharp)
   Pre-define a list of languages. Azure Speech SDK will identify the languages used before starting speech recognition. (i.e., Language Detection -> Speech Recognition for that specific language). Speech recognition for mixed languages is not supported at the time of writing.
@@ -85,6 +80,12 @@ Additional Features:
   Reports the recognition confidence, and the actual words recognized.
 - ✔️ [Continuous recognition](https://docs.microsoft.com/en-us/azure/cognitive-services/speech-service/get-started-speech-to-text?tabs=windowsinstall&pivots=programming-language-csharp#continuous-recognition)
   Instead of performing speech recognition until silence or reaching 15 seconds, let user choose when to stop the recognition.
+- ❌ Add an GUI option instead of solely rely on hotkeys
 - ❌ [Select an audio input device](https://docs.microsoft.com/en-us/azure/cognitive-services/speech-service/how-to-select-audio-input-devices)
   Instead of the default microphone, let the user choose the preferred microphone.
-- ❌ Add an GUI option instead of solely rely on hotkeys
+
+## References
+
+Minimal Sample:
+- [Quickstart: Recognize speech from a microphone in C# under .NET Framework for Windows](https://github.com/Azure-Samples/cognitive-services-speech-sdk/tree/master/quickstart/csharp/dotnet/from-microphone)
+- [Get started with speech-to-text](https://docs.microsoft.com/en-us/azure/cognitive-services/speech-service/get-started-speech-to-text?pivots=programming-language-csharp&tabs=windowsinstall)
