@@ -13,7 +13,13 @@ Copy the Azure key and region text into the config file `config.json`.
 
 Launch the program and press `Alt+H` to start speech recognition.
 
-## Default Config
+## Demo GIFs
+
+![](docs/images/demo-en_US.gif)
+
+![](docs/images/demo-zh_TW.gif)
+
+## Configuration File
 
 ```json
 {
