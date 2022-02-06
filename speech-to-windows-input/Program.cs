@@ -1,6 +1,8 @@
 ﻿using Microsoft.CognitiveServices.Speech;
 using Microsoft.CognitiveServices.Speech.Audio;
 using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -28,6 +30,7 @@ namespace speech_to_windows_input
         public bool ContinuousRecognition { get; set; } = false;
         public int TotalTimeoutMS { get; set; } = 60000;
         public bool UseMenuKey { get; set; } = false;
+        // TODO: Send Enter after recognition
     }
     class Program
     {
@@ -41,6 +44,7 @@ namespace speech_to_windows_input
         static bool cancelling = false;
         static String partialRecognizedText = "";
         static Stopwatch stopwatch = null;
+        static ConcurrentQueue<Tuple<String, String>> inputQueue = new ConcurrentQueue<Tuple<String, String>>();
         // static void 
         static void Main(string[] args)
         {
@@ -83,6 +87,8 @@ namespace speech_to_windows_input
             Console.CancelKeyPress += Console_CancelKeyPress;
             // Init Speech Recognizer
             InitSpeechRecognizer();
+            Thread thread = new Thread(SendInput);
+            thread.Start();
             // Message Loop with Windows.Forms for simplicity (instead of custom WindowProc callback)
             while (loop)
             {
@@ -98,6 +104,7 @@ namespace speech_to_windows_input
                 }
                 Thread.Sleep(1);
             }
+            thread.Abort();
             // Uninstall Ketboard Hook
             kbdHook.UninstallGlobalHook();
         }
@@ -198,18 +205,29 @@ namespace speech_to_windows_input
             for (i = 0; i < min && s1[i] == s2[i]; i++) { }
             return s1.Substring(0, i);
         }
-        private static void SendInput(String text)
+        private static void QueueInput(String text)
         {
             if (cancelling)
                 return;
-            // Note: text may be longer/shorter than partialRecognizedText
-            String s = GetCommonPrefix(partialRecognizedText, text);
-            for (int i = 0; i < partialRecognizedText.Length - s.Length; i++)
-                llc.Keyboard.SendKeyDown((int)Keys.Back);
-            if (partialRecognizedText.Length - s.Length > 0)
-                llc.Keyboard.SendKeyUp((int)Keys.Back);
-            if (s.Length < text.Length)
-                llc.Keyboard.SendText(text.Substring(s.Length));
+            inputQueue.Enqueue(new Tuple<String, String>(partialRecognizedText, text));
+        }
+        private static void SendInput()
+        {
+            while (true)
+            {
+                Thread.Sleep(1); // Change busy-waiting to sleep & wake-up
+                Tuple<String, String> tuple;
+                if (!inputQueue.TryDequeue(out tuple))
+                    continue;
+                // Note: text may be longer/shorter than partialRecognizedText
+                String s = GetCommonPrefix(tuple.Item1, tuple.Item2);
+                for (int i = 0; i < tuple.Item1.Length - s.Length; i++)
+                    llc.Keyboard.SendKeyDown((int)Keys.Back);
+                if (tuple.Item1.Length - s.Length > 0)
+                    llc.Keyboard.SendKeyUp((int)Keys.Back);
+                if (s.Length < tuple.Item2.Length)
+                    llc.Keyboard.SendText(tuple.Item2.Substring(s.Length));
+            }
         }
         private static void InitSpeechRecognizer()
         {
@@ -235,7 +253,7 @@ namespace speech_to_windows_input
                 Console.WriteLine($"Partial Recognized Text: {e.Result.Text}");
                 if (!config.InputIncrementally)
                     return;
-                SendInput(e.Result.Text);
+                QueueInput(e.Result.Text);
                 partialRecognizedText = e.Result.Text;
             };
             speechRecognizer.Recognized += (s, e) =>
@@ -282,7 +300,7 @@ namespace speech_to_windows_input
                 if (Text != null)
                 {
                     Console.WriteLine($"Final Recognized Text: {Text}");
-                    SendInput(Text);
+                    QueueInput(Text);
                     partialRecognizedText = "";
                 }
             };

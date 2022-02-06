@@ -19,6 +19,8 @@ Launch the program and press `Alt+H` to start speech recognition.
 
 ![](docs/images/demo-zh_TW.gif)
 
+Note: If your current input language is set to Chinese, you can select characters after performing speech recognition.
+
 ## Configuration File
 
 ```json
