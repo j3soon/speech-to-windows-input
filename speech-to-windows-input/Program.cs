@@ -7,7 +7,6 @@ using System.Linq;
 using System.Media;
 using System.Text.Json;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using llc = LowLevelControls;
 
@@ -26,6 +25,8 @@ namespace speech_to_windows_input
         public String OutputForm { get; set; } = "Text"; // or "Lexical", or "Normalized"
         public bool AutoPunctuation { get; set; } = true;
         public bool DetailedLog { get; set; } = false;
+        public bool ContinuousRecognition { get; set; } = false;
+        public int TotalTimeoutMS { get; set; } = 60000;
     }
     class Program
     {
@@ -37,13 +38,14 @@ namespace speech_to_windows_input
         static bool recognizing = false;
         static bool cancelling = false;
         static String partialRecognizedText = "";
+        static Stopwatch stopwatch = null;
         // static void 
         static void Main(string[] args)
         {
             // Tutorial
             Console.OutputEncoding = System.Text.Encoding.Unicode;
             Console.WriteLine("speech-to-windows-input (made by j3soon)");
-            Console.WriteLine("1. Press Win+H to convert speech to text input. The recognition stops on microphone silence or after 15 seconds.");
+            Console.WriteLine("1. Press Alt+H to convert speech to text input. The recognition stops on microphone silence or after 15 seconds.");
             // Console.WriteLine("2. Press ESC to cancel the on-going speech recognition (no input will be generated).");
             Console.WriteLine("2. The on-going speech recognition cannot be cancelled. (please wait until 15 seconds is reached)");
             Console.WriteLine("3. Press Ctrl+C to exit.");
@@ -83,6 +85,15 @@ namespace speech_to_windows_input
             while (loop)
             {
                 Application.DoEvents(); // Deal with Low Level Hooks Callback
+                if (stopwatch != null && stopwatch.ElapsedMilliseconds >= config.TotalTimeoutMS)
+                {
+                    // stopwatch != null means:
+                    // - continuousRecognition == true
+                    // - recognizing == true
+                    stopwatch.Stop();
+                    stopwatch = null;
+                    speechRecognizer.StopContinuousRecognitionAsync();
+                }
                 Thread.Sleep(1);
             }
             // Uninstall Ketboard Hook
@@ -98,7 +109,8 @@ namespace speech_to_windows_input
             if (vkCode == (uint)Keys.H && !keyHDown)
             {
                 keyHDown = true;
-                if (llc.Keyboard.IsKeyDown((int)Keys.LWin) || llc.Keyboard.IsKeyDown((int)Keys.RWin)) {
+                if (llc.Keyboard.IsKeyDown((int)Keys.Menu))
+                {
                     if (!recognizing)
                     {
                         Console.WriteLine($"[{DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss")}] Speech Recognition Started");
@@ -106,13 +118,23 @@ namespace speech_to_windows_input
                             SystemSounds.Exclamation.Play();
                         cancelling = false;
                         recognizing = true;
-                        // Starts speech recognition, and returns after a single utterance is recognized. The end of a
-                        // single utterance is determined by listening for silence at the end or until a maximum of 15
-                        // seconds of audio is processed.  The task returns the recognition text as result. 
-                        // Note: Since RecognizeOnceAsync() returns only a single utterance, it is suitable only for single
-                        // shot recognition like command or query. 
-                        // For long-running multi-utterance recognition, use StartContinuousRecognitionAsync() instead.
-                        speechRecognizer.RecognizeOnceAsync();
+                        partialRecognizedText = "";
+                        if (!config.ContinuousRecognition)
+                        {
+                            // Starts speech recognition, and returns after a single utterance is recognized. The end of a
+                            // single utterance is determined by listening for silence at the end or until a maximum of 15
+                            // seconds of audio is processed.  The task returns the recognition text as result. 
+                            // Note: Since RecognizeOnceAsync() returns only a single utterance, it is suitable only for single
+                            // shot recognition like command or query. 
+                            // For long-running multi-utterance recognition, use StartContinuousRecognitionAsync() instead.
+                            speechRecognizer.RecognizeOnceAsync();
+                        }
+                        else
+                        {
+                            stopwatch = new Stopwatch();
+                            stopwatch.Start();
+                            speechRecognizer.StartContinuousRecognitionAsync();
+                        }
                     }
                     else
                     {
@@ -185,10 +207,9 @@ namespace speech_to_windows_input
             };
             speechRecognizer.Recognized += (s, e) => {
                 var result = e.Result;
-                String Text = null, ErrorMessage = null;
+                String Text = null;
                 if (config.DetailedLog)
                     Console.WriteLine($"Detailed Result: {result}");
-                recognizing = false;
                 // Checks result.
                 if (result.Reason == ResultReason.RecognizedSpeech)
                 {
@@ -208,30 +229,45 @@ namespace speech_to_windows_input
                 }
                 else if (result.Reason == ResultReason.NoMatch)
                 {
-                    ErrorMessage = $"NOMATCH: Speech could not be recognized.";
+                    Console.WriteLine($"NOMATCH: Speech could not be recognized.");
+                    // if (config.StopOnSilence)
+                    //     speechRecognizer.StopContinuousRecognitionAsync();
                 }
                 else if (result.Reason == ResultReason.Canceled)
                 {
                     var cancellation = CancellationDetails.FromResult(result);
-                    ErrorMessage = $"CANCELED: Reason={cancellation.Reason}";
+                    Console.WriteLine($"CANCELED: Reason={cancellation.Reason}");
 
                     if (cancellation.Reason == CancellationReason.Error)
                     {
-                        ErrorMessage += $"\nCANCELED: ErrorCode={cancellation.ErrorCode}";
-                        ErrorMessage += $"\nCANCELED: ErrorDetails={cancellation.ErrorDetails}";
-                        ErrorMessage += $"\nCANCELED: Did you update the subscription info?";
+                        Console.WriteLine($"CANCELED: ErrorCode={cancellation.ErrorCode}");
+                        Console.WriteLine($"CANCELED: ErrorDetails={cancellation.ErrorDetails}");
+                        Console.WriteLine($"CANCELED: Did you update the subscription info?");
                     }
                 }
-                if (ErrorMessage == null)
+                if (Text != null)
                 {
                     Console.WriteLine($"Final Recognized Text: {Text}");
                     SendInput(Text);
                     partialRecognizedText = "";
                 }
-                else
+            };
+            speechRecognizer.Canceled += (s, e) =>
+            {
+                Console.WriteLine($"CANCELED: Reason={e.Reason}");
+
+                if (e.Reason == CancellationReason.Error)
                 {
-                    Console.WriteLine($"Error: {ErrorMessage}");
+                    Console.WriteLine($"CANCELED: ErrorCode={e.ErrorCode}");
+                    Console.WriteLine($"CANCELED: ErrorDetails={e.ErrorDetails}");
+                    Console.WriteLine($"CANCELED: Did you update the speech key and location/region info?");
                 }
+                // Re-initialize to fix temporary internet issue.
+                InitSpeechRecognizer();
+            };
+            speechRecognizer.SessionStopped += (s, e) =>
+            {
+                recognizing = false;
                 if (config.SoundEffect)
                     SystemSounds.Exclamation.Play();
                 if (!cancelling)
@@ -239,6 +275,7 @@ namespace speech_to_windows_input
                 else
                     Console.WriteLine($"[{DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss")}] Speech Recognition Cancelled");
             };
+            Console.WriteLine($"[{DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss")}] Speech Recognizer Initialized");
         }
     }
 }

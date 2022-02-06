@@ -25,7 +25,9 @@ Copy the Azure key and region text into the config file `config.json`.
   "InputIncrementally": true,
   "OutputForm": "Text",
   "AutoPunctuation": true,
-  "DetailedLog": false
+  "DetailedLog": false,
+  "ContinuousRecognition": false,
+  "TotalTimeoutMS": 60000
 }
 ```
 
@@ -41,12 +43,14 @@ Make sure to replace `<paste-your-subscription-key>` and `<paste-your-region>` t
 - `OutputForm`: Select the recognition output, can be `"Text"`, `"Lexical"`, or `"Normalized"`. See the [output form details](https://docs.microsoft.com/en-us/dotnet/api/microsoft.cognitiveservices.speech.detailedspeechrecognitionresult?view=azure-dotnet) for more information.
 - `AutoPunctuation`: Determines whether to automatically insert punctuation.
 - `DetailedLog`: Determines whether to log confidence, recognized words, and other recognition details.
+- `ContinuousRecognition`: Determines whether to use continuous recognition, which requires user to manually stop the on-going recognition.
+- `TotalTimeoutMS`: When continuous recognition is enabled, the recognition will be stopped after the specified amount of milliseconds, to avoid user forgetting to stop the on-going recognition.
 
 ## Program Hint
 
 ```
 speech-to-windows-input (made by j3soon)
-1. Press Win+H to convert speech to text input. The recognition stops on microphone silence or after 15 seconds.
+1. Press Alt+H to convert speech to text input. The recognition stops on microphone silence or after 15 seconds.
 2. The on-going speech recognition cannot be cancelled. (please wait until 15 seconds is reached)
 3. Press Ctrl+C to exit.
 Notes:
@@ -79,7 +83,8 @@ Additional Features:
   Allows recognition of custom phrases such as names, technical terms, etc.
 - ✔️ [Detailed results](https://docs.microsoft.com/en-us/dotnet/api/microsoft.cognitiveservices.speech.detailedspeechrecognitionresult?view=azure-dotnet), [[sample1]](https://github.com/Azure-Samples/cognitive-services-speech-sdk/issues/667), [[sample2]](https://stackoverflow.com/a/51190072)
   Reports the recognition confidence, and the actual words recognized.
-- ❌ [Continuous recognition](https://docs.microsoft.com/en-us/azure/cognitive-services/speech-service/get-started-speech-to-text?tabs=windowsinstall&pivots=programming-language-csharp#continuous-recognition)
+- ✔️ [Continuous recognition](https://docs.microsoft.com/en-us/azure/cognitive-services/speech-service/get-started-speech-to-text?tabs=windowsinstall&pivots=programming-language-csharp#continuous-recognition)
   Instead of performing speech recognition until silence or reaching 15 seconds, let user choose when to stop the recognition.
 - ❌ [Select an audio input device](https://docs.microsoft.com/en-us/azure/cognitive-services/speech-service/how-to-select-audio-input-devices)
   Instead of the default microphone, let the user choose the preferred microphone.
+- ❌ Add an GUI option instead of solely rely on hotkeys
