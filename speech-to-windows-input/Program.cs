@@ -59,7 +59,7 @@ namespace speech_to_windows_input
             Console.WriteLine("Notes:");
             Console.WriteLine("- The default microphone & internet connection is used for speech recognition.");
             Console.WriteLine("- If input fails for certain applications, you may need to launch this program with `Run as administrator`.");
-            Console.WriteLine("- If the initial recognition delay is for detecting the language used. You can modify the language list to contain only a single language to speed up the process.");
+            Console.WriteLine("- The initial recognition delay is for detecting the language used. You can modify the language list to contain only a single language to speed up the process.");
             // Generate and Load Config
             var jsonConfig = JsonSerializer.Serialize(config, new JsonSerializerOptions
             {

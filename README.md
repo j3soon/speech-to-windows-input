@@ -72,7 +72,7 @@ speech-to-windows-input (made by j3soon)
 Notes:
 - The default microphone & internet connection is used for speech recognition.
 - If input fails for certain applications, you may need to launch this program with `Run as administrator`.
-- If the initial recognition delay is for detecting the language used. You can modify the language list to contain only a single language to speed up the process.
+- The initial recognition delay is for detecting the language used. You can modify the language list to contain only a single language to speed up the process.
 ```
 
 ## Side Notes
