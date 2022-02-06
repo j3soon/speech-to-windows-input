@@ -27,6 +27,7 @@ namespace speech_to_windows_input
         public bool DetailedLog { get; set; } = false;
         public bool ContinuousRecognition { get; set; } = false;
         public int TotalTimeoutMS { get; set; } = 60000;
+        public bool UseMenuKey { get; set; } = false;
     }
     class Program
     {
@@ -35,6 +36,7 @@ namespace speech_to_windows_input
         static SpeechRecognizer speechRecognizer;
         static bool loop = true; // mutex isn't necessary since both Main and Application.DoEvents (WinProc) is in the main thread.
         static bool keyHDown = false;
+        static bool keyAppsDown = false;
         static bool recognizing = false;
         static bool cancelling = false;
         static String partialRecognizedText = "";
@@ -53,7 +55,8 @@ namespace speech_to_windows_input
             Console.WriteLine("- The default microphone is used for speech recognition.");
             Console.WriteLine("- If input fails for certain applications, you may need to launch this program with `Run as administrator`.");
             // Generate and Load Config
-            var jsonConfig = JsonSerializer.Serialize(config, new JsonSerializerOptions {
+            var jsonConfig = JsonSerializer.Serialize(config, new JsonSerializerOptions
+            {
                 Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
                 WriteIndented = true,
             });
@@ -103,6 +106,48 @@ namespace speech_to_windows_input
             e.Cancel = true;
             loop = false;
         }
+        private static void ToggleSTT()
+        {
+            if (!recognizing)
+            {
+                Console.WriteLine($"[{DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss")}] Speech Recognition Started");
+                if (config.SoundEffect)
+                    SystemSounds.Exclamation.Play();
+                cancelling = false;
+                recognizing = true;
+                partialRecognizedText = "";
+                if (!config.ContinuousRecognition)
+                {
+                    // Starts speech recognition, and returns after a single utterance is recognized. The end of a
+                    // single utterance is determined by listening for silence at the end or until a maximum of 15
+                    // seconds of audio is processed.  The task returns the recognition text as result. 
+                    // Note: Since RecognizeOnceAsync() returns only a single utterance, it is suitable only for single
+                    // shot recognition like command or query. 
+                    // For long-running multi-utterance recognition, use StartContinuousRecognitionAsync() instead.
+                    speechRecognizer.RecognizeOnceAsync();
+                }
+                else
+                {
+                    stopwatch = new Stopwatch();
+                    stopwatch.Start();
+                    speechRecognizer.StartContinuousRecognitionAsync();
+                }
+            }
+            else
+            {
+                Console.WriteLine($"[{DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss")}] Speech Recognition Early Stopping...");
+                speechRecognizer.StopContinuousRecognitionAsync();
+            }
+        }
+        private static void CancelSTT()
+        {
+            if (recognizing)
+            {
+                cancelling = true;
+                Console.WriteLine($"[{DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss")}] Speech Recognition Cancelling...");
+                speechRecognizer.StopContinuousRecognitionAsync();
+            }
+        }
         private static bool kbdHook_KeyDownEvent(llc.KeyboardHook sender, uint vkCode, bool injected)
         {
             if (vkCode == (uint)Keys.H && !keyHDown)
@@ -110,36 +155,16 @@ namespace speech_to_windows_input
                 keyHDown = true;
                 if (llc.Keyboard.IsKeyDown((int)Keys.Menu))
                 {
-                    if (!recognizing)
-                    {
-                        Console.WriteLine($"[{DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss")}] Speech Recognition Started");
-                        if (config.SoundEffect)
-                            SystemSounds.Exclamation.Play();
-                        cancelling = false;
-                        recognizing = true;
-                        partialRecognizedText = "";
-                        if (!config.ContinuousRecognition)
-                        {
-                            // Starts speech recognition, and returns after a single utterance is recognized. The end of a
-                            // single utterance is determined by listening for silence at the end or until a maximum of 15
-                            // seconds of audio is processed.  The task returns the recognition text as result. 
-                            // Note: Since RecognizeOnceAsync() returns only a single utterance, it is suitable only for single
-                            // shot recognition like command or query. 
-                            // For long-running multi-utterance recognition, use StartContinuousRecognitionAsync() instead.
-                            speechRecognizer.RecognizeOnceAsync();
-                        }
-                        else
-                        {
-                            stopwatch = new Stopwatch();
-                            stopwatch.Start();
-                            speechRecognizer.StartContinuousRecognitionAsync();
-                        }
-                    }
-                    else
-                    {
-                        Console.WriteLine($"[{DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss")}] Speech Recognition Early Stopping...");
-                        speechRecognizer.StopContinuousRecognitionAsync();
-                    }
+                    ToggleSTT();
+                    return true;
+                }
+            }
+            else if (vkCode == (uint)Keys.Apps && !keyAppsDown)
+            {
+                if (config.UseMenuKey)
+                {
+                    keyAppsDown = true;
+                    ToggleSTT();
                     return true;
                 }
             }
@@ -147,9 +172,7 @@ namespace speech_to_windows_input
             {
                 if (recognizing)
                 {
-                    cancelling = true;
-                    Console.WriteLine($"[{DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss")}] Speech Recognition Cancelling...");
-                    speechRecognizer.StopContinuousRecognitionAsync();
+                    CancelSTT();
                     return true;
                 }
             }
@@ -159,6 +182,14 @@ namespace speech_to_windows_input
         {
             if (vkCode == (uint)Keys.H)
                 keyHDown = false;
+            else if (vkCode == (uint)Keys.Apps)
+            {
+                if (config.UseMenuKey)
+                {
+                    keyAppsDown = false;
+                    return true;
+                }
+            }
             return false;
         }
         private static String GetCommonPrefix(String s1, String s2)
@@ -197,14 +228,16 @@ namespace speech_to_windows_input
             PhraseListGrammar phraseListGrammar = PhraseListGrammar.FromRecognizer(speechRecognizer);
             foreach (var phrase in config.PhraseList)
                 phraseListGrammar.AddPhrase(phrase);
-            speechRecognizer.Recognizing += (s, e) => {
+            speechRecognizer.Recognizing += (s, e) =>
+            {
                 Console.WriteLine($"Partial Recognized Text: {e.Result.Text}");
                 if (!config.InputIncrementally)
                     return;
                 SendInput(e.Result.Text);
                 partialRecognizedText = e.Result.Text;
             };
-            speechRecognizer.Recognized += (s, e) => {
+            speechRecognizer.Recognized += (s, e) =>
+            {
                 var result = e.Result;
                 String Text = null;
                 if (config.DetailedLog)
