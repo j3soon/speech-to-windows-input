@@ -96,6 +96,7 @@ Compilation:
 - ✔️ [Continuous recognition](https://docs.microsoft.com/en-us/azure/cognitive-services/speech-service/get-started-speech-to-text?tabs=windowsinstall&pivots=programming-language-csharp#continuous-recognition)
   Instead of performing speech recognition until silence or reaching 15 seconds, let user choose when to stop the recognition.
 - ❌ Add an GUI option instead of solely rely on hotkeys
+- ❌ Hot reload config
 - ❌ [Select an audio input device](https://docs.microsoft.com/en-us/azure/cognitive-services/speech-service/how-to-select-audio-input-devices)
   Instead of the default microphone, let the user choose the preferred microphone.
 

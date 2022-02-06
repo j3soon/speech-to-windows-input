@@ -89,7 +89,7 @@ namespace speech_to_windows_input
             Console.CancelKeyPress += Console_CancelKeyPress;
             // Init Speech Recognizer
             InitSpeechRecognizer();
-            Thread thread = new Thread(SendInput);
+            Thread thread = new Thread(SendInputWorker);
             thread.Start();
             // Message Loop with Windows.Forms for simplicity (instead of custom WindowProc callback)
             while (loop)
@@ -213,6 +213,7 @@ namespace speech_to_windows_input
                 return;
             inputQueue.Enqueue(new Tuple<String, String>(partialRecognizedText, text));
         }
+        // Copied directly from llc
         private static llc.Natives.INPUT getInput(int key, bool down, bool unicode = false)
         {
             llc.Natives.INPUT input = new llc.Natives.INPUT
@@ -243,21 +244,16 @@ namespace speech_to_windows_input
         }
         [DllImport("user32.dll", SetLastError = true)]
         static extern uint SendInput(uint nInputs, llc.Natives.INPUT[] pInputs, int cbSize);
+        // Pack before send can reduce the number of system calls and speed up the SendInput process.
         private static void SendBackspaceAndText(int backSpaces, String text)
         {
-            int len = 2 * text.Length;
-            if (backSpaces > 0)
-                len += 2 * backSpaces;
+            int len = 2 * backSpaces + 2 * text.Length;
             var inputs = new llc.Natives.INPUT[len];
-            int textBegin = 0;
-            if (backSpaces > 0)
+            int textBegin = 2 * backSpaces;
+            for (int i = 0; i < backSpaces; i++)
             {
-                for (int i = 0; i < backSpaces; i++)
-                {
-                    inputs[2 * i] = getInput((int)Keys.Back, true);
-                    inputs[2 * i + 1] = getInput((int)Keys.Back, false);
-                }
-                textBegin = 2 * backSpaces;
+                inputs[2 * i] = getInput((int)Keys.Back, true);
+                inputs[2 * i + 1] = getInput((int)Keys.Back, false);
             }
             for (int i = 0; i < text.Length; i++)
             {
@@ -268,7 +264,7 @@ namespace speech_to_windows_input
             if (sent != len)
                 throw new Win32Exception(Marshal.GetLastWin32Error());
         }
-        private static void SendInput()
+        private static void SendInputWorker()
         {
             while (true)
             {
