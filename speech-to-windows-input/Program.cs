@@ -187,9 +187,9 @@ namespace speech_to_windows_input
         }
         private static bool kbdHook_KeyUpEvent(llc.KeyboardHook sender, uint vkCode, bool injected)
         {
-            if (vkCode == (uint)Keys.H)
+            if (vkCode == (uint)Keys.H && keyHDown)
                 keyHDown = false;
-            else if (vkCode == (uint)Keys.Apps)
+            else if (vkCode == (uint)Keys.Apps && keyAppsDown)
             {
                 if (config.UseMenuKey)
                 {
