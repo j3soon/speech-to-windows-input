@@ -59,6 +59,7 @@ Make sure to replace `<paste-your-subscription-key>` and `<paste-your-region>` t
 - `ContinuousRecognition`: Determines whether to use continuous recognition, which requires user to manually stop the on-going recognition.
 - `TotalTimeoutMS`: When continuous recognition is enabled, the recognition will be stopped after the specified amount of milliseconds, to avoid user forgetting to stop the on-going recognition.
 - `UseMenuKey`: Determines whether the [menu/application key](https://en.wikipedia.org/wiki/Menu_key) (`≣ Menu`) can be used as `Alt+H`. (Make the key acts like a dedicated speech recognition key)
+- `SendTrailingEnter`: Determines whether to send a trailing `enter` after sending inputs.
 
 ## Program Hint
 

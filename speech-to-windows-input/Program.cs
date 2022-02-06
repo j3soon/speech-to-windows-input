@@ -30,7 +30,7 @@ namespace speech_to_windows_input
         public bool ContinuousRecognition { get; set; } = false;
         public int TotalTimeoutMS { get; set; } = 60000;
         public bool UseMenuKey { get; set; } = false;
-        // TODO: Send Enter after recognition
+        public bool SendTrailingEnter { get; set; } = false;
     }
     class Program
     {
@@ -220,6 +220,13 @@ namespace speech_to_windows_input
                 if (!inputQueue.TryDequeue(out tuple))
                     continue;
                 // Note: text may be longer/shorter than partialRecognizedText
+                if (tuple.Item2 == null)
+                {
+                    // Null Item2 only occurs for signaling enter.
+                    if (config.SendTrailingEnter)
+                        llc.Keyboard.SendKey((int)Keys.Enter);
+                    continue;
+                }
                 String s = GetCommonPrefix(tuple.Item1, tuple.Item2);
                 for (int i = 0; i < tuple.Item1.Length - s.Length; i++)
                     llc.Keyboard.SendKeyDown((int)Keys.Back);
@@ -302,6 +309,7 @@ namespace speech_to_windows_input
                     Console.WriteLine($"Final Recognized Text: {Text}");
                     QueueInput(Text);
                     partialRecognizedText = "";
+                    QueueInput(null); // Signal end of recognition
                 }
             };
             speechRecognizer.Canceled += (s, e) =>
