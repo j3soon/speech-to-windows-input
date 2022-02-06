@@ -49,7 +49,7 @@ Make sure to replace `<paste-your-subscription-key>` and `<paste-your-region>` t
 
 - `AzureSubscriptionKey`: Your Azure subscription key.
 - `AzureServiceRegion`: Your Azure subscription region. (e.g., `"westus"` or `"eastasia"`)
-- `Languages`: A list of languages to perform speech recognition. (No mixed language recognition) See the [supported languages](https://docs.microsoft.com/en-us/azure/cognitive-services/speech-service/language-support#speech-to-text) for more information.
+- `Languages`: A list of languages to perform speech recognition. (No mixed language recognition) See the [supported languages](https://docs.microsoft.com/en-us/azure/cognitive-services/speech-service/language-support#speech-to-text) for more information. If the list only contains a single language, the recognition performance will be much faster since no auto language detection is performed.
 - `PhraseList`: A list of of custom phrases such as names, technical terms, etc. For an example, if you are a gamer that types `GG` (i.e., Good Game) a lot, you will want to add `GG` in this list. Otherwise, Azure will recognize it as `JuJu`, `Gigi`, etc.
 - `PrioritizeLatencyOrAccuracy`: Select the recognition mode between `"Latency"` and `"Accuracy"`.
 - `SoundEffect`: Determines whether the program should play a hint sound when the speech recognition starts/stops.
@@ -70,9 +70,9 @@ speech-to-windows-input (made by j3soon)
 2. Press ESC to cancel the on-going speech recognition (no input will be generated).
 3. Press Ctrl+C to exit.
 Notes:
-- Requires internet.
-- The default microphone is used for speech recognition.
+- The default microphone & internet connection is used for speech recognition.
 - If input fails for certain applications, you may need to launch this program with `Run as administrator`.
+- If the initial recognition delay is for detecting the language used. You can modify the language list to contain only a single language to speed up the process.
 ```
 
 ## Side Notes
