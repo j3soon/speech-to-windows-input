@@ -45,9 +45,8 @@ namespace speech_to_windows_input
             // Tutorial
             Console.OutputEncoding = System.Text.Encoding.Unicode;
             Console.WriteLine("speech-to-windows-input (made by j3soon)");
-            Console.WriteLine("1. Press Alt+H to convert speech to text input. The recognition stops on microphone silence or after 15 seconds.");
-            // Console.WriteLine("2. Press ESC to cancel the on-going speech recognition (no input will be generated).");
-            Console.WriteLine("2. The on-going speech recognition cannot be cancelled. (please wait until 15 seconds is reached)");
+            Console.WriteLine("1. Press Alt+H to convert speech to text input. The recognition stops on (1) microphone silence (2) after 15 seconds (3) Alt+H is pressed again.");
+            Console.WriteLine("2. Press ESC to cancel the on-going speech recognition (no input will be generated).");
             Console.WriteLine("3. Press Ctrl+C to exit.");
             Console.WriteLine("Notes:");
             Console.WriteLine("- Requires internet.");

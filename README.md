@@ -50,8 +50,8 @@ Make sure to replace `<paste-your-subscription-key>` and `<paste-your-region>` t
 
 ```
 speech-to-windows-input (made by j3soon)
-1. Press Alt+H to convert speech to text input. The recognition stops on microphone silence or after 15 seconds.
-2. The on-going speech recognition cannot be cancelled. (please wait until 15 seconds is reached)
+1. Press Alt+H to convert speech to text input. The recognition stops on (1) microphone silence (2) after 15 seconds (3) Alt+H is pressed again.
+2. Press ESC to cancel the on-going speech recognition (no input will be generated).
 3. Press Ctrl+C to exit.
 Notes:
 - Requires internet.
@@ -66,8 +66,7 @@ Runtime:
 - If you don't want your credit card be accidentally charged, set the Pricing Tier to `Free F0` instead of `Standard F0` (Pay as You Go). The free tier has [5 hours audio quota each month](https://azure.microsoft.com/en-us/pricing/details/cognitive-services/speech-services/), and will not charge you when exceeding the quota limit.
 
 Compilation:
-- `SpeechConfig.FromSubscription` will report `BadImageFormatException` if `AnyCPU` is used instead of `x86`/`x64`.
-- Must compile with `x86` config since LowLevelControls [does not work in x64 config](https://github.com/j3soon/LowLevelControls/issues/1).
+- Azure Speech service does not support `AnyCPU`, use `x86`/`x64` instead.
 
 ## Features:
 
