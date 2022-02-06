@@ -202,14 +202,14 @@ namespace speech_to_windows_input
         {
             if (cancelling)
                 return;
+            // Note: text may be longer/shorter than partialRecognizedText
             String s = GetCommonPrefix(partialRecognizedText, text);
-            if (s.Length == text.Length)
-                return;
             for (int i = 0; i < partialRecognizedText.Length - s.Length; i++)
                 llc.Keyboard.SendKeyDown((int)Keys.Back);
             if (partialRecognizedText.Length - s.Length > 0)
                 llc.Keyboard.SendKeyUp((int)Keys.Back);
-            llc.Keyboard.SendText(text.Substring(s.Length));
+            if (s.Length < text.Length)
+                llc.Keyboard.SendText(text.Substring(s.Length));
         }
         private static void InitSpeechRecognizer()
         {
