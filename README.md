@@ -7,7 +7,11 @@ Prerequisites:
 - An Azure subscription key for the Speech service. See [Try the speech service for free](https://docs.microsoft.com/en-us/azure/cognitive-services/speech-service/overview#try-the-speech-service-for-free).
 - A Windows PC with a working microphone.
 
+Download the executable in [the release page](https://github.com/j3soon/speech-to-windows-input/releases).
+
 Copy the Azure key and region text into the config file `config.json`.
+
+Launch the program and press `Alt+H` to start speech recognition.
 
 ## Default Config
 

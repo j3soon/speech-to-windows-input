@@ -206,7 +206,9 @@ namespace speech_to_windows_input
             if (s.Length == text.Length)
                 return;
             for (int i = 0; i < partialRecognizedText.Length - s.Length; i++)
-                llc.Keyboard.SendKey((int)Keys.Back);
+                llc.Keyboard.SendKeyDown((int)Keys.Back);
+            if (partialRecognizedText.Length - s.Length > 0)
+                llc.Keyboard.SendKeyUp((int)Keys.Back);
             llc.Keyboard.SendText(text.Substring(s.Length));
         }
         private static void InitSpeechRecognizer()
