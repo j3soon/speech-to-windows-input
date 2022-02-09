@@ -51,6 +51,18 @@ namespace speech_to_windows_input
         static ConcurrentQueue<Tuple<String, String>> inputQueue = new ConcurrentQueue<Tuple<String, String>>();
         static void Main(string[] args)
         {
+            // Mutex lock for running only one instance of the program
+            var assembly = typeof(Program).Assembly;
+            var attribute = (GuidAttribute)assembly.GetCustomAttributes(typeof(GuidAttribute), true)[0];
+            var guid = attribute.Value;
+            var mutex = new Mutex(true, guid);
+            if (!mutex.WaitOne(TimeSpan.Zero, true))
+            {
+                Console.WriteLine("Another Instance of this Program is Already Running.");
+                Console.WriteLine("Press any key to exit.");
+                Console.ReadKey();
+                return;
+            }
             // Tutorial
             Console.OutputEncoding = System.Text.Encoding.Unicode;
             Console.WriteLine("speech-to-windows-input (made by j3soon)");
@@ -120,6 +132,7 @@ namespace speech_to_windows_input
             thread.Abort();
             // Uninstall Ketboard Hook
             kbdHook.UninstallGlobalHook();
+            mutex.ReleaseMutex();
         }
         static bool LoadConfig()
         {
