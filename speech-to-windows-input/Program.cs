@@ -44,11 +44,11 @@ namespace speech_to_windows_input
         static bool keyAppsDown = false;
         static bool recognizing = false;
         static bool hasRecognized = false;
+        static bool shouldReloadConfig = false;
         static bool cancelling = false;
         static String partialRecognizedText = "";
         static Stopwatch stopwatch = null;
         static ConcurrentQueue<Tuple<String, String>> inputQueue = new ConcurrentQueue<Tuple<String, String>>();
-        // static void 
         static void Main(string[] args)
         {
             // Tutorial
@@ -62,24 +62,9 @@ namespace speech_to_windows_input
             Console.WriteLine("- If input fails for certain applications, you may need to launch this program with `Run as administrator`.");
             Console.WriteLine("- The initial recognition delay is for detecting the language used. You can modify the language list to contain only a single language to speed up the process.");
             // Generate and Load Config
-            var jsonConfig = JsonSerializer.Serialize(config, new JsonSerializerOptions
+            if (!LoadConfig())
             {
-                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-                WriteIndented = true,
-            });
-            var configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "config.json");
-            if (!File.Exists(configPath))
-                File.WriteAllText(configPath, jsonConfig);
-            jsonConfig = File.ReadAllText(configPath);
-            Console.WriteLine("Your current configuration: " + jsonConfig);
-            try
-            {
-                config = JsonSerializer.Deserialize<Config>(jsonConfig);
-            }
-            catch (JsonException e)
-            {
-                Console.WriteLine(e.ToString());
-                Console.WriteLine("\nError occurred when parsing JSON config, press any key to exit.");
+                Console.WriteLine("Press any key to exit.");
                 Console.ReadKey();
                 return;
             }
@@ -88,6 +73,18 @@ namespace speech_to_windows_input
             kbdHook.KeyUpEvent += kbdHook_KeyUpEvent;
             kbdHook.InstallGlobalHook();
             Console.CancelKeyPress += Console_CancelKeyPress;
+            // Set up watcher for config hot reload
+            var watcher = new FileSystemWatcher(AppDomain.CurrentDomain.BaseDirectory);
+            watcher.NotifyFilter = NotifyFilters.LastWrite;
+            watcher.Filter = "config.json";
+            watcher.Changed += (s, e) =>
+            {
+                // May fire twice when using Notepad
+                // See https://stackoverflow.com/q/1764809/3917161
+                Console.WriteLine($"[{DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss")}] Config File is Modified, Reloading...");
+                shouldReloadConfig = true;
+            };
+            watcher.EnableRaisingEvents = true;
             // Init Speech Recognizer
             InitSpeechRecognizer();
             Thread thread = new Thread(SendInputWorker);
@@ -105,11 +102,48 @@ namespace speech_to_windows_input
                     stopwatch = null;
                     speechRecognizer.StopContinuousRecognitionAsync();
                 }
+                if (!recognizing && shouldReloadConfig)
+                {
+                    shouldReloadConfig = false;
+                    if (LoadConfig())
+                    {
+                        Console.WriteLine($"[{DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss")}] Config File Reloaded.");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"[{DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss")}] Config File Failed to Reload, Using Old Config.");
+                    }
+                    InitSpeechRecognizer();
+                }
                 Thread.Sleep(1);
             }
             thread.Abort();
             // Uninstall Ketboard Hook
             kbdHook.UninstallGlobalHook();
+        }
+        static bool LoadConfig()
+        {
+            var configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "config.json");
+            var jsonConfig = JsonSerializer.Serialize(config, new JsonSerializerOptions
+            {
+                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+                WriteIndented = true,
+            });
+            if (!File.Exists(configPath))
+                File.WriteAllText(configPath, jsonConfig);
+            jsonConfig = File.ReadAllText(configPath);
+            Console.WriteLine("Your current configuration: " + jsonConfig);
+            try
+            {
+                config = JsonSerializer.Deserialize<Config>(jsonConfig);
+            }
+            catch (JsonException e)
+            {
+                Console.WriteLine(e.ToString());
+                Console.WriteLine("\nError occurred when parsing JSON config.");
+                return false;
+            }
+            return true;
         }
         private static void Console_CancelKeyPress(object sender, ConsoleCancelEventArgs e)
         {
