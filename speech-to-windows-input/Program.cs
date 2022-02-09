@@ -43,6 +43,7 @@ namespace speech_to_windows_input
         static bool keyHDown = false;
         static bool keyAppsDown = false;
         static bool recognizing = false;
+        static bool hasRecognized = false;
         static bool cancelling = false;
         static String partialRecognizedText = "";
         static Stopwatch stopwatch = null;
@@ -124,6 +125,7 @@ namespace speech_to_windows_input
                     SystemSounds.Exclamation.Play();
                 cancelling = false;
                 recognizing = true;
+                hasRecognized = false;
                 partialRecognizedText = "";
                 if (!config.ContinuousRecognition)
                 {
@@ -371,7 +373,7 @@ namespace speech_to_windows_input
                     Console.WriteLine($"Final Recognized Text: {Text}");
                     QueueInput(Text);
                     partialRecognizedText = "";
-                    QueueInput(null); // Signal end of recognition
+                    hasRecognized = true;
                 }
             };
             speechRecognizer.Canceled += (s, e) =>
@@ -396,6 +398,8 @@ namespace speech_to_windows_input
                     Console.WriteLine($"[{DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss")}] Speech Recognition Done");
                 else
                     Console.WriteLine($"[{DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss")}] Speech Recognition Cancelled");
+                if (hasRecognized)
+                    QueueInput(null); // Signal end of recognition
             };
             Console.WriteLine($"[{DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss")}] Speech Recognizer Initialized");
         }
