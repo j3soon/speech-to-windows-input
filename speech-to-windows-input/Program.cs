@@ -33,6 +33,7 @@ namespace speech_to_windows_input
         public int TotalTimeoutMS { get; set; } = 60000;
         public bool UseMenuKey { get; set; } = false;
         public bool SendTrailingEnter { get; set; } = false;
+        public bool ShowListeningOverlay { get; set; } = true;
     }
     class Program
     {
@@ -49,6 +50,7 @@ namespace speech_to_windows_input
         static String partialRecognizedText = "";
         static Stopwatch stopwatch = null;
         static ConcurrentQueue<Tuple<String, String>> inputQueue = new ConcurrentQueue<Tuple<String, String>>();
+        static Form1 form1;
         static void Main(string[] args)
         {
             // Mutex lock for running only one instance of the program
@@ -63,6 +65,7 @@ namespace speech_to_windows_input
                 Console.ReadKey();
                 return;
             }
+            form1 = new Form1();
             // Tutorial
             Console.OutputEncoding = System.Text.Encoding.Unicode;
             Console.WriteLine("speech-to-windows-input (made by j3soon)");
@@ -172,6 +175,8 @@ namespace speech_to_windows_input
                     SystemSounds.Exclamation.Play();
                 cancelling = false;
                 recognizing = true;
+                if (config.ShowListeningOverlay)
+                    form1.Visible = true;
                 hasRecognized = false;
                 partialRecognizedText = "";
                 if (!config.ContinuousRecognition)
@@ -439,6 +444,8 @@ namespace speech_to_windows_input
             speechRecognizer.SessionStopped += (s, e) =>
             {
                 recognizing = false;
+                if (config.ShowListeningOverlay)
+                    form1.Invoke((MethodInvoker)delegate { form1.Hide(); }); // Thread safe calls to control
                 if (config.SoundEffect)
                     SystemSounds.Exclamation.Play();
                 if (!cancelling)
