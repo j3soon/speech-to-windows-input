@@ -4,6 +4,7 @@
 
 Prerequisites:
 - .Net Framework >= 4.6.1
+- [Microsoft Visual C++ Redistributable Package](https://docs.microsoft.com/en-US/cpp/windows/latest-supported-vc-redist?view=msvc-170#visual-studio-2015-2017-2019-and-2022)
 - An Azure subscription key for the Speech service. See [Try the speech service for free](https://docs.microsoft.com/en-us/azure/cognitive-services/speech-service/overview#try-the-speech-service-for-free).
 - A Windows PC with a working microphone.
 
