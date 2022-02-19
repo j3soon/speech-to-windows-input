@@ -234,9 +234,9 @@ namespace speech_to_windows_input
         {
             if (vkCode == (uint)Keys.H && !keyHDown)
             {
-                keyHDown = true;
                 if (llc.Keyboard.IsKeyDown((int)Keys.Menu))
                 {
+                    keyHDown = true;
                     ToggleSTT();
                     return true;
                 }
@@ -261,15 +261,15 @@ namespace speech_to_windows_input
             }
             else if (vkCode >= (uint)Keys.D0 && vkCode <= (uint)Keys.D9 && !keyConfigDown)
             {
-                keyConfigDown = true;
                 if (config.UseSwitchConfigKey && llc.Keyboard.IsKeyDown((int)Keys.Menu))
                 {
+                    keyConfigDown = true;
                     configId = (vkCode - (uint)Keys.D0);
                     shouldReloadConfig = true;
                     return true;
                 }
             }
-            else if (vkCode == (uint)Keys.Escape)
+            else if (vkCode == (uint)Keys.Escape && !injected)
             {
                 if (recognizing)
                 {
@@ -282,7 +282,11 @@ namespace speech_to_windows_input
         private static bool kbdHook_KeyUpEvent(llc.KeyboardHook sender, uint vkCode, bool injected)
         {
             if (vkCode == (uint)Keys.H && keyHDown)
+            {
                 keyHDown = false;
+                if (!llc.Keyboard.IsKeyDown((int)Keys.Menu))
+                    llc.Keyboard.SendKey((int)Keys.Escape);
+            }
             else if (vkCode == (uint)Keys.Apps && keyAppsDown)
             {
                 if (config.UseMenuKey)
@@ -300,7 +304,11 @@ namespace speech_to_windows_input
                 }
             }
             else if (vkCode >= (uint)Keys.D0 && vkCode <= (uint)Keys.D9 && keyConfigDown)
+            {
                 keyConfigDown = false;
+                if (!llc.Keyboard.IsKeyDown((int)Keys.Menu))
+                    llc.Keyboard.SendKey((int)Keys.Escape);
+            }
             return false;
         }
         private static String GetCommonPrefix(String s1, String s2)
