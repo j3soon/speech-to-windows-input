@@ -45,10 +45,11 @@ Note: If your current input language is set to Chinese, you can select character
 - ✔️ Send additional trailing characters (`SendTrailingEnter`, `SendTrailingSpace`)
 - ✔️ Change comma to whitespace and remove period (`ChineseChatMode`)
 - ✔️ Show a semi-transparent GUI overlay when recognizing (`ShowListeningOverlay`)
+- ✔️ Hot reload config file
+- ✔️ Switch between config files (`UseSwitchConfigKey`)
+- ✔️ Forbid multiple program instances
 - ✔️ [Arcane options for debugging](https://docs.microsoft.com/en-us/dotnet/api/microsoft.cognitiveservices.speech.detailedspeechrecognitionresult?view=azure-dotnet), [[sample1]](https://github.com/Azure-Samples/cognitive-services-speech-sdk/issues/667), [[sample2]](https://stackoverflow.com/a/51190072) (`PrioritizeLatencyOrAccuracy`, `SoundEffect`, `OutputForm`, `DetailedLog`, `ForceCapitalizeFirstAlphabet`)
   More debugging features and Azure SDK options that doesn't interest normal users.
-- ✔️ Hot reload config file
-- ✔️ Forbid multiple program instances
 - ❌ Mixed language speech recognition
   It's much better to skip the language detection phase and perform mixed language speech recognition directly to avoid initial delay. Unfortunately Azure SDK doesn't support this yet.
 - ❌ Add a GUI menu window to start/stop recognition instead of solely rely on hotkeys.
@@ -84,7 +85,8 @@ Note: If your current input language is set to Chinese, you can select character
   "SendTrailingSpace": false,
   "ChineseChatMode": false,
   "ForceCapitalizeFirstAlphabet": true,
-  "ShowListeningOverlay": true
+  "ShowListeningOverlay": true,
+  "UseSwitchConfigKey": false
 }
 ```
 
@@ -110,6 +112,7 @@ Make sure to replace `<paste-your-subscription-key>` and `<paste-your-region>` t
 - `ChineseChatMode`: Replaces Chinese comma (`，`) into English whitespace (` `), and removes Chinese period (`。`).
 - `ForceCapitalizeFirstAlphabet`: Force capitalization of the first English alphabet in a sentence. This allows better user experience when `InputIncrementally` is enabled.
 - `ShowListeningOverlay`: Determines whether to show an indicator microphone overlay window when the program is listening.
+- `UseSwitchConfigKey`: Determines whether to enable switching between configs with `Alt+0`, `Alt+1`, and so on.
 
 ## Program Hint
 
