@@ -32,6 +32,7 @@ namespace speech_to_windows_input
         public bool ContinuousRecognition { get; set; } = false;
         public int TotalTimeoutMS { get; set; } = 60000;
         public bool UseMenuKey { get; set; } = false;
+        public int UseFxKey { get; set; } = 0;
         public bool SendTrailingEnter { get; set; } = false;
         public bool SendTrailingSpace { get; set; } = false;
         public bool ChineseChatMode { get; set; } = false;
@@ -46,6 +47,7 @@ namespace speech_to_windows_input
         static bool loop = true; // mutex isn't necessary since both Main and Application.DoEvents (WinProc) is in the main thread.
         static bool keyHDown = false;
         static bool keyAppsDown = false;
+        static bool keyFxDown = false;
         static bool recognizing = false;
         static bool shouldReloadConfig = false;
         static bool cancelling = false;
@@ -237,6 +239,15 @@ namespace speech_to_windows_input
                     return true;
                 }
             }
+            else if (vkCode >= (uint)Keys.F1 && vkCode <= (uint)Keys.F24 && !keyFxDown)
+            {
+                if (config.UseFxKey == vkCode + 1 - (uint)Keys.F1)
+                {
+                    keyFxDown = true;
+                    ToggleSTT();
+                    return true;
+                }
+            }
             else if (vkCode == (uint)Keys.Escape)
             {
                 if (recognizing)
@@ -256,6 +267,14 @@ namespace speech_to_windows_input
                 if (config.UseMenuKey)
                 {
                     keyAppsDown = false;
+                    return true;
+                }
+            }
+            else if (vkCode >= (uint)Keys.F1 && vkCode <= (uint)Keys.F24 && keyFxDown)
+            {
+                if (config.UseFxKey == vkCode + 1 - (uint)Keys.F1)
+                {
+                    keyFxDown = false;
                     return true;
                 }
             }

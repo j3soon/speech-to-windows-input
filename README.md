@@ -79,6 +79,7 @@ Note: If your current input language is set to Chinese, you can select character
   "ContinuousRecognition": false,
   "TotalTimeoutMS": 60000,
   "UseMenuKey": false,
+  "UseFxKey": 0,
   "SendTrailingEnter": false,
   "SendTrailingSpace": false,
   "ChineseChatMode": false,
@@ -102,6 +103,8 @@ Make sure to replace `<paste-your-subscription-key>` and `<paste-your-region>` t
 - `ContinuousRecognition`: Determines whether to use continuous recognition, which requires user to manually stop the on-going recognition.
 - `TotalTimeoutMS`: When continuous recognition is enabled, the recognition will be stopped after the specified amount of milliseconds, to avoid user forgetting to stop the on-going recognition.
 - `UseMenuKey`: Determines whether the [menu/application key](https://en.wikipedia.org/wiki/Menu_key) (`≣ Menu`) can be used as `Alt+H`. (Make the key acts like a dedicated speech recognition key)
+- `UseFxKey`: Determines whether the `F1`-`F24` keys can be used as `Alt+H`.
+  `"UseFxKey": 0` disables this feature, `"UseFxKey": 1` uses `F1`, and so on.
 - `SendTrailingEnter`: Determines whether to send a trailing `enter` after sending inputs.
 - `SendTrailingSpace`: Determines whether to send a trailing `space` after sending inputs.
 - `ChineseChatMode`: Replaces Chinese comma (`，`) into English whitespace (` `), and removes Chinese period (`。`).
