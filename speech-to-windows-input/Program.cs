@@ -38,6 +38,7 @@ namespace speech_to_windows_input
         public bool ChineseChatMode { get; set; } = false;
         public bool ForceCapitalizeFirstAlphabet { get; set; } = true;
         public bool ShowListeningOverlay { get; set; } = true;
+        public bool UseSwitchConfigKey { get; set; } = false;
     }
     class Program
     {
@@ -48,9 +49,11 @@ namespace speech_to_windows_input
         static bool keyHDown = false;
         static bool keyAppsDown = false;
         static bool keyFxDown = false;
+        static bool keyConfigDown = false;
         static bool recognizing = false;
         static bool shouldReloadConfig = false;
         static bool cancelling = false;
+        static uint configId = 0;
         static String partialRecognizedText = "";
         static Stopwatch stopwatch = null;
         static ConcurrentQueue<Tuple<String, String>> inputQueue = new ConcurrentQueue<Tuple<String, String>>();
@@ -95,9 +98,11 @@ namespace speech_to_windows_input
             // Set up watcher for config hot reload
             var watcher = new FileSystemWatcher(AppDomain.CurrentDomain.BaseDirectory);
             watcher.NotifyFilter = NotifyFilters.LastWrite;
-            watcher.Filter = "config.json";
+            watcher.Filter = "config*.json";
             watcher.Changed += (s, e) =>
             {
+                if (e.Name !=getConfigFilename())
+                    return;
                 // May fire twice when using Notepad
                 // See https://stackoverflow.com/q/1764809/3917161
                 Console.WriteLine($"[{DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss")}] Config File is Modified, Reloading...");
@@ -126,7 +131,8 @@ namespace speech_to_windows_input
                     shouldReloadConfig = false;
                     if (LoadConfig())
                     {
-                        Console.WriteLine($"[{DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss")}] Config File Reloaded.");
+                        var suffix = (configId == 0 ? "" : configId.ToString());
+                        Console.WriteLine($"[{DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss")}] Config File Reloaded. ({getConfigFilename()})");
                     }
                     else
                     {
@@ -141,9 +147,14 @@ namespace speech_to_windows_input
             kbdHook.UninstallGlobalHook();
             mutex.ReleaseMutex();
         }
+        static String getConfigFilename()
+        {
+            var suffix = (configId == 0 ? "" : configId.ToString());
+            return $"config{suffix}.json";
+        }
         static bool LoadConfig()
         {
-            var configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "config.json");
+            var configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, getConfigFilename());
             var jsonConfig = JsonSerializer.Serialize(config, new JsonSerializerOptions
             {
                 Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
@@ -248,6 +259,16 @@ namespace speech_to_windows_input
                     return true;
                 }
             }
+            else if (vkCode >= (uint)Keys.D0 && vkCode <= (uint)Keys.D9 && !keyConfigDown)
+            {
+                keyConfigDown = true;
+                if (config.UseSwitchConfigKey && llc.Keyboard.IsKeyDown((int)Keys.Menu))
+                {
+                    configId = (vkCode - (uint)Keys.D0);
+                    shouldReloadConfig = true;
+                    return true;
+                }
+            }
             else if (vkCode == (uint)Keys.Escape)
             {
                 if (recognizing)
@@ -278,6 +299,8 @@ namespace speech_to_windows_input
                     return true;
                 }
             }
+            else if (vkCode >= (uint)Keys.D0 && vkCode <= (uint)Keys.D9 && keyConfigDown)
+                keyConfigDown = false;
             return false;
         }
         private static String GetCommonPrefix(String s1, String s2)
