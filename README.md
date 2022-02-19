@@ -45,6 +45,7 @@ Note: If your current input language is set to Chinese, you can select character
   "SendTrailingEnter": false,
   "SendTrailingSpace": false,
   "ChineseChatMode": false,
+  "ForceCapitalizeFirstAlphabet": true,
   "ShowListeningOverlay": true
 }
 ```
@@ -67,6 +68,8 @@ Make sure to replace `<paste-your-subscription-key>` and `<paste-your-region>` t
 - `SendTrailingEnter`: Determines whether to send a trailing `enter` after sending inputs.
 - `SendTrailingSpace`: Determines whether to send a trailing `space` after sending inputs.
 - `ChineseChatMode`: Replaces Chinese comma (`，`) into English whitespace (` `), and removes Chinese period (`。`).
+- `ChineseChatMode`: Replaces Chinese comma (`，`) into English whitespace (` `), and removes Chinese period (`。`).
+- `ForceCapitalizeFirstAlphabet`: Force capitalization of the first English alphabet in a sentence. This allows better user experience when `InputIncrementally` is enabled.
 - `ShowListeningOverlay`: Determines whether to show an indicator microphone overlay window when the program is listening.
 
 ## Program Hint

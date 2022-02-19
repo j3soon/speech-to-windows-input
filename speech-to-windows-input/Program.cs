@@ -35,6 +35,7 @@ namespace speech_to_windows_input
         public bool SendTrailingEnter { get; set; } = false;
         public bool SendTrailingSpace { get; set; } = false;
         public bool ChineseChatMode { get; set; } = false;
+        public bool ForceCapitalizeFirstAlphabet { get; set; } = true;
         public bool ShowListeningOverlay { get; set; } = true;
     }
     class Program
@@ -149,7 +150,6 @@ namespace speech_to_windows_input
             if (!File.Exists(configPath))
                 File.WriteAllText(configPath, jsonConfig);
             jsonConfig = File.ReadAllText(configPath);
-            Console.WriteLine("Your current configuration: " + jsonConfig);
             try
             {
                 config = JsonSerializer.Deserialize<Config>(jsonConfig);
@@ -160,6 +160,13 @@ namespace speech_to_windows_input
                 Console.WriteLine("\nError occurred when parsing JSON config.");
                 return false;
             }
+            // Serialize again to remove invalid config
+            jsonConfig = JsonSerializer.Serialize(config, new JsonSerializerOptions
+            {
+                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+                WriteIndented = true,
+            });
+            Console.WriteLine("Your current configuration: " + jsonConfig);
             return true;
         }
         private static void Console_CancelKeyPress(object sender, ConsoleCancelEventArgs e)
@@ -264,8 +271,12 @@ namespace speech_to_windows_input
         {
             if (text == null)
                 return null;
+            if (text.Length == 0)
+                return text;
             if (config.ChineseChatMode)
-                return text.Replace("，", " ").Replace("。", "");
+                text = text.Replace("，", " ").Replace("。", "");
+            if (config.ForceCapitalizeFirstAlphabet)
+                text = text[0].ToString().ToUpper() + text.Substring(1);
             return text;
         }
         private static void QueueInput(String text)
