@@ -44,6 +44,7 @@ Note: If your current input language is set to Chinese, you can select character
   "UseMenuKey": false,
   "SendTrailingEnter": false,
   "SendTrailingSpace": false,
+  "ChineseChatMode": false,
   "ShowListeningOverlay": true
 }
 ```
@@ -65,6 +66,7 @@ Make sure to replace `<paste-your-subscription-key>` and `<paste-your-region>` t
 - `UseMenuKey`: Determines whether the [menu/application key](https://en.wikipedia.org/wiki/Menu_key) (`≣ Menu`) can be used as `Alt+H`. (Make the key acts like a dedicated speech recognition key)
 - `SendTrailingEnter`: Determines whether to send a trailing `enter` after sending inputs.
 - `SendTrailingSpace`: Determines whether to send a trailing `space` after sending inputs.
+- `ChineseChatMode`: Replaces Chinese comma (`，`) into English whitespace (` `), and removes Chinese period (`。`).
 - `ShowListeningOverlay`: Determines whether to show an indicator microphone overlay window when the program is listening.
 
 ## Program Hint

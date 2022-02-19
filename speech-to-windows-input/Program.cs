@@ -34,6 +34,7 @@ namespace speech_to_windows_input
         public bool UseMenuKey { get; set; } = false;
         public bool SendTrailingEnter { get; set; } = false;
         public bool SendTrailingSpace { get; set; } = false;
+        public bool ChineseChatMode { get; set; } = false;
         public bool ShowListeningOverlay { get; set; } = true;
     }
     class Program
@@ -259,11 +260,19 @@ namespace speech_to_windows_input
             for (i = 0; i < min && s1[i] == s2[i]; i++) { }
             return s1.Substring(0, i);
         }
+        private static String PostProcessText(String text)
+        {
+            if (text == null)
+                return null;
+            if (config.ChineseChatMode)
+                return text.Replace("，", " ").Replace("。", "");
+            return text;
+        }
         private static void QueueInput(String text)
         {
             if (cancelling)
                 return;
-            inputQueue.Enqueue(new Tuple<String, String>(partialRecognizedText, text));
+            inputQueue.Enqueue(new Tuple<String, String>(PostProcessText(partialRecognizedText), PostProcessText(text)));
         }
         // Copied directly from llc
         private static llc.Natives.INPUT getInput(int key, bool down, bool unicode = false)
