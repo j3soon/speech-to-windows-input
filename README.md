@@ -31,30 +31,30 @@ Note: If your current input language is set to Chinese, you can select character
 ## Features:
 
 (✔️ means implemented, ❌ means not)
-- ✔️ [Automatic language detection](https://docs.microsoft.com/en-us/azure/cognitive-services/speech-service/how-to-automatic-language-detection?pivots=programming-language-csharp) (`Languages`)
+- ✔️ [Automatic language detection](https://docs.microsoft.com/en-us/azure/cognitive-services/speech-service/how-to-automatic-language-detection?pivots=programming-language-csharp) (`Languages`)  
   Pre-define a list of languages and let Azure Speech SDK detect the languages used before starting speech recognition. (i.e., Language Detection -> Start Speech Recognition for that specific language). However it causes a long initial delay. (Can be disabled)
-- ✔️ [Recognizing custom phrases](https://docs.microsoft.com/en-us/dotnet/api/microsoft.cognitiveservices.speech.phraselistgrammar?view=azure-dotnet) (`PhraseList`)
+- ✔️ [Recognizing custom phrases](https://docs.microsoft.com/en-us/dotnet/api/microsoft.cognitiveservices.speech.phraselistgrammar?view=azure-dotnet) (`PhraseList`)  
   Allows recognition of custom phrases such as names, technical terms, etc.
-- ✔️ Input while recognizing (`InputIncrementally`)
+- ✔️ Input while recognizing (`InputIncrementally`)  
   Allows real-time speech recognition experience. Will modify with backspaces if the recognition result changes.
-- ✔️ Automatically add punctuation (`AutoPunctuation`)
-- ✔️ [Continuous recognition](https://docs.microsoft.com/en-us/azure/cognitive-services/speech-service/get-started-speech-to-text?tabs=windowsinstall&pivots=programming-language-csharp#continuous-recognition) (`ContinuousRecognition` & `TotalTimeoutMS`)
+- ✔️ Automatically add punctuation (`AutoPunctuation`)  
+- ✔️ [Continuous recognition](https://docs.microsoft.com/en-us/azure/cognitive-services/speech-service/get-started-speech-to-text?tabs=windowsinstall&pivots=programming-language-csharp#continuous-recognition) (`ContinuousRecognition` & `TotalTimeoutMS`)  
   Instead of performing speech recognition until silence or reaching 15 seconds, let user decide when to stop the recognition by pressing the speech recognition key (`Alt+H`) again. Timeouts in 60 seconds (i.e., 60000 ms) By default.
-- ✔️ Use a single key to launch speech recognition (`UseMenuKey`)
-  Most people don't use the [menu/application key](https://en.wikipedia.org/wiki/Menu_key) (`≣ Menu`). So we can override it to behave as the speech recognition key.
+- ✔️ Use a single key to launch speech recognition (`UseMenuKey`, `UseFxKey`)  
+  Most people don't use the [menu/application key](https://en.wikipedia.org/wiki/Menu_key) (`≣ Menu`). So we can override it to behave as the speech recognition key. Similarly, you can override `F1` key to `F24` key.
 - ✔️ Send additional trailing characters (`SendTrailingEnter`, `SendTrailingSpace`)
 - ✔️ Change comma to whitespace and remove period (`ChineseChatMode`)
 - ✔️ Show a semi-transparent GUI overlay when recognizing (`ShowListeningOverlay`)
 - ✔️ Hot reload config file
 - ✔️ Switch between config files (`UseSwitchConfigKey`)
 - ✔️ Forbid multiple program instances
-- ✔️ [Arcane options for debugging](https://docs.microsoft.com/en-us/dotnet/api/microsoft.cognitiveservices.speech.detailedspeechrecognitionresult?view=azure-dotnet), [[sample1]](https://github.com/Azure-Samples/cognitive-services-speech-sdk/issues/667), [[sample2]](https://stackoverflow.com/a/51190072) (`PrioritizeLatencyOrAccuracy`, `SoundEffect`, `OutputForm`, `DetailedLog`, `ForceCapitalizeFirstAlphabet`)
+- ✔️ [Arcane options for debugging](https://docs.microsoft.com/en-us/dotnet/api/microsoft.cognitiveservices.speech.detailedspeechrecognitionresult?view=azure-dotnet), [[sample1]](https://github.com/Azure-Samples/cognitive-services-speech-sdk/issues/667), [[sample2]](https://stackoverflow.com/a/51190072) (`PrioritizeLatencyOrAccuracy`, `SoundEffect`, `OutputForm`, `DetailedLog`, `ForceCapitalizeFirstAlphabet`)  
   More debugging features and Azure SDK options that doesn't interest normal users.
-- ❌ Mixed language speech recognition
+- ❌ Mixed language speech recognition  
   It's much better to skip the language detection phase and perform mixed language speech recognition directly to avoid initial delay. Unfortunately Azure SDK doesn't support this yet.
 - ❌ Add a GUI menu window to start/stop recognition instead of solely rely on hotkeys.
 - ❌ Add a GUI config window to modify the configs instead of direct editing.
-- ❌ [Select preferred audio input device](https://docs.microsoft.com/en-us/azure/cognitive-services/speech-service/how-to-select-audio-input-devices)
+- ❌ [Select preferred audio input device](https://docs.microsoft.com/en-us/azure/cognitive-services/speech-service/how-to-select-audio-input-devices)  
   Instead of the default microphone, let the user choose the preferred microphone.
 - ❌ Robustness against unstable (or changing) internet connection
 - ❌ Robustness against unstable (or changing) microphones
