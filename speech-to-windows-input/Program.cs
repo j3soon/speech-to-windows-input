@@ -33,6 +33,7 @@ namespace speech_to_windows_input
         public int TotalTimeoutMS { get; set; } = 60000;
         public bool UseMenuKey { get; set; } = false;
         public bool SendTrailingEnter { get; set; } = false;
+        public bool SendTrailingSpace { get; set; } = false;
         public bool ShowListeningOverlay { get; set; } = true;
     }
     class Program
@@ -327,6 +328,8 @@ namespace speech_to_windows_input
                 if (tuple.Item2 == null)
                 {
                     // Null Item2 only occurs for signaling enter.
+                    if (config.SendTrailingSpace)
+                        llc.Keyboard.SendKey((int)Keys.Space);
                     if (config.SendTrailingEnter)
                         llc.Keyboard.SendKey((int)Keys.Enter);
                     continue;

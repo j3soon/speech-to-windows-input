@@ -43,6 +43,7 @@ Note: If your current input language is set to Chinese, you can select character
   "TotalTimeoutMS": 60000,
   "UseMenuKey": false,
   "SendTrailingEnter": false,
+  "SendTrailingSpace": false,
   "ShowListeningOverlay": true
 }
 ```
@@ -63,6 +64,7 @@ Make sure to replace `<paste-your-subscription-key>` and `<paste-your-region>` t
 - `TotalTimeoutMS`: When continuous recognition is enabled, the recognition will be stopped after the specified amount of milliseconds, to avoid user forgetting to stop the on-going recognition.
 - `UseMenuKey`: Determines whether the [menu/application key](https://en.wikipedia.org/wiki/Menu_key) (`≣ Menu`) can be used as `Alt+H`. (Make the key acts like a dedicated speech recognition key)
 - `SendTrailingEnter`: Determines whether to send a trailing `enter` after sending inputs.
+- `SendTrailingSpace`: Determines whether to send a trailing `space` after sending inputs.
 - `ShowListeningOverlay`: Determines whether to show an indicator microphone overlay window when the program is listening.
 
 ## Program Hint
