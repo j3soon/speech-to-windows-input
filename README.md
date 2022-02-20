@@ -1,5 +1,30 @@
 # Speech to Windows Input (STWI)
 
+Perform speech-to-text (STT/ASR) with Azure Speech service and simulate keyboard to input the recognized the text.
+
+Supports English, Chinese, Japanese, [and more...](https://docs.microsoft.com/en-us/azure/cognitive-services/speech-service/language-support#speech-to-text)
+
+## Why this Project?
+
+- Windows [Speech Recognition](https://support.microsoft.com/en-au/windows/use-voice-typing-to-talk-instead-of-type-on-your-pc-fec94565-c4bd-329d-e59a-af033fa5689f) (``Win+H``) only supports English.
+- Although the old [Speech Recognition](https://www.windowscentral.com/how-set-speech-recognition-windows-10) tool supports Chinese and more languages, the recognition accuracy is very bad.
+- [Office 365 Speech Recognition](https://support.microsoft.com/en-us/office/dictate-your-documents-in-word-3876e05f-3fcc-418f-b8ab-db7ce0d11d3c) (``Alt+` ``) supports English, Chinese, Japanese and more languages. The recognition accuracy (especially for Chinese) is really good. Unfortunately, it only works in Office 365 applications and requires an Office 365 subscription. (Not free)
+- Microsoft didn't implement the Office 365 Speech Recognition function in Windows.
+
+So I decided to implement a free & open-source speech recognition tool that works on all applications on Windows.
+
+## Why Use Azure Speech Service as Backend?
+
+- High recognition accuracy as in Office 365 Speech Recognition. (The accuracy seems to be better than Google's speech service)
+- Offline speech recognition model is not practical due to the hardware requirements. (Also, I don't know how to train an ASR model as accurate as Azure's Speech Service)
+- The free tier has [5 hours quota each month](https://azure.microsoft.com/en-us/pricing/details/cognitive-services/speech-services/), which is sufficient for normal usages. You won't be [charged by exceeding the usage quota in the free tier](https://azure.microsoft.com/en-us/free/free-account-faq/). Moreover, new users receive [\$200 free credits](https://azure.microsoft.com/en-us/offers/ms-azr-0044p/), which means a total of 200 hrs ($1 per hour).
+- The only drawback is requiring a free Azure account with a subscription key before using it. See [Try the speech service for free](https://docs.microsoft.com/en-us/azure/cognitive-services/speech-service/overview#try-the-speech-service-for-free).
+- Supports text-only training for [custom model](https://docs.microsoft.com/en-us/azure/cognitive-services/speech-service/custom-speech-overview) to achieve higher accuracy for domain-specific terminologies.
+
+This project is not affiliated with Microsoft / Azure in any way.
+
+If there's a better speech recognition service with higher accuracy & reasonable price, please [file an issue](https://github.com/j3soon/speech-to-windows-input/issues).
+
 ## How to Use
 
 Prerequisites:
@@ -8,15 +33,13 @@ Prerequisites:
 - An Azure subscription key for the Speech service. See [Try the speech service for free](https://docs.microsoft.com/en-us/azure/cognitive-services/speech-service/overview#try-the-speech-service-for-free).
 - A Windows PC with a working microphone.
 
-Download the executable in [the release page](https://github.com/j3soon/speech-to-windows-input/releases).
-
-Copy the Azure key and region text into the config file `config.json`.
-
-Launch the program and press `Alt+H` to start speech recognition.
-
-The program recognizes both English and Chinese by default. Therefore there is a long initial delay for detecting the used language. You should keep only a single language in the `Languages` option in the config file for better user experience.
-
-See the [Configuration File](#configuration-file) section for more configurations.
+Installation:
+- Download the executable in [the release page](https://github.com/j3soon/speech-to-windows-input/releases).
+- Copy the Azure key and region text into the config file `config.json`.
+- Set up your microphone and make sure you have stable internet connection.
+- Launch the program and press `Alt+H` to start speech recognition.
+- The program recognizes both English and Chinese by default. Therefore there is a long initial delay for detecting the used language. You should keep only a single language in the `Languages` option in the config file for better user experience.
+- See the [Configuration File](#configuration-file) section for more configurations.
 
 ## Demo GIFs
 
@@ -24,7 +47,7 @@ See the [Configuration File](#configuration-file) section for more configuration
 
 ![](docs/images/demo-zh_TW.gif)
 
-(These are demos of previous versions. New version has shorter delay and a semi-transparent GUI overlay)
+(These are demos of previous versions. New version has shorter delay and a semi-transparent GUI overlay indicator)
 
 Note: If your current input language is set to Chinese, you can select characters after performing speech recognition.
 
