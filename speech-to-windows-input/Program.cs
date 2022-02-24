@@ -285,7 +285,7 @@ namespace speech_to_windows_input
             {
                 keyHDown = false;
                 if (!llc.Keyboard.IsKeyDown((int)Keys.Menu))
-                    llc.Keyboard.SendKey((int)Keys.Escape);
+                    llc.Keyboard.SendKey((int)Keys.LMenu);
             }
             else if (vkCode == (uint)Keys.Apps && keyAppsDown)
             {
@@ -307,7 +307,7 @@ namespace speech_to_windows_input
             {
                 keyConfigDown = false;
                 if (!llc.Keyboard.IsKeyDown((int)Keys.Menu))
-                    llc.Keyboard.SendKey((int)Keys.Escape);
+                    llc.Keyboard.SendKey((int)Keys.LMenu);
             }
             return false;
         }
