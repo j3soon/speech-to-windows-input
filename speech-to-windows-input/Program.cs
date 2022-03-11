@@ -197,7 +197,15 @@ namespace speech_to_windows_input
                 cancelling = false;
                 recognizing = true;
                 if (config.ShowListeningOverlay)
-                    form1.Visible = true;
+                {
+                    // The window doesn't show up sometimes (don't know how to reproduce) if we only change visibility as below
+                    // form1.Visible = true;
+
+                    // Try to make sure the window does show up in all scenarios
+                    form1.WindowState = FormWindowState.Normal;
+                    form1.Show();
+                    form1.BringToFront();
+                }
                 if (!config.ContinuousRecognition)
                 {
                     // Starts speech recognition, and returns after a single utterance is recognized. The end of a
