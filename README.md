@@ -43,11 +43,13 @@ Installation:
 
 ## Demo GIFs
 
+With `"Languages": ["en-US"]`:
+
 ![](docs/images/demo-en_US.gif)
 
-![](docs/images/demo-zh_TW.gif)
+With `"Languages": ["zh-TW"]`:
 
-(These are demos of previous versions. New version has shorter delay and a semi-transparent GUI overlay indicator)
+![](docs/images/demo-zh_TW.gif)
 
 Note: If your current input language is set to Chinese, you can select characters after performing speech recognition.
 
