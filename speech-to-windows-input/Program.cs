@@ -65,6 +65,8 @@ namespace speech_to_windows_input
                 // Mutex lock for running only one instance of the program
                 var assembly = typeof(Program).Assembly;
                 var attribute = (GuidAttribute)assembly.GetCustomAttributes(typeof(GuidAttribute), true)[0];
+                var fvi = System.Diagnostics.FileVersionInfo.GetVersionInfo(assembly.Location);
+                var version = fvi.FileVersion;
                 var guid = attribute.Value;
                 // The mutex will be released by the OS when application exit / crash
                 var mutex = new Mutex(true, guid);
@@ -78,14 +80,21 @@ namespace speech_to_windows_input
                 form1 = new Form1();
                 // Tutorial
                 Console.OutputEncoding = System.Text.Encoding.Unicode;
-                Console.WriteLine("speech-to-windows-input (made by j3soon)");
+                Console.WriteLine("speech-to-windows-input (STWI) v" + version.Remove(version.Length - 2));
+                Console.WriteLine("");
+                Console.WriteLine("Source Code Link (MIT License):");
+                Console.WriteLine("");
+                Console.WriteLine("    https://github.com/j3soon/speech-to-windows-input");
+                Console.WriteLine("");
                 Console.WriteLine("1. Press Alt+H to convert speech to text input. The recognition stops on (1) microphone silence (2) after 15 seconds (3) Alt+H is pressed again.");
                 Console.WriteLine("2. Press ESC to cancel the on-going speech recognition (no input will be generated).");
                 Console.WriteLine("3. Press Ctrl+C to exit.");
+                Console.WriteLine("");
                 Console.WriteLine("Notes:");
                 Console.WriteLine("- The default microphone & internet connection is used for speech recognition.");
                 Console.WriteLine("- If input fails for certain applications, you may need to launch this program with `Run as administrator`.");
                 Console.WriteLine("- The initial recognition delay is for detecting the language used. You can modify the language list to contain only a single language to speed up the process.");
+                Console.WriteLine("");
                 // Generate and Load Config
                 if (!LoadConfig())
                 {
@@ -206,6 +215,7 @@ namespace speech_to_windows_input
                 WriteIndented = true,
             });
             Console.WriteLine("Your current configuration: " + jsonConfig);
+            Console.WriteLine("");
             return true;
         }
         private static void Console_CancelKeyPress(object sender, ConsoleCancelEventArgs e)
