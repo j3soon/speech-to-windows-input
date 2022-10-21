@@ -60,92 +60,118 @@ namespace speech_to_windows_input
         static Form1 form1;
         static void Main(string[] args)
         {
-            // Mutex lock for running only one instance of the program
-            var assembly = typeof(Program).Assembly;
-            var attribute = (GuidAttribute)assembly.GetCustomAttributes(typeof(GuidAttribute), true)[0];
-            var guid = attribute.Value;
-            var mutex = new Mutex(true, guid);
-            if (!mutex.WaitOne(TimeSpan.Zero, true))
+            try
             {
-                Console.WriteLine("Another Instance of this Program is Already Running.");
-                Console.WriteLine("Press any key to exit.");
-                Console.ReadKey();
-                return;
-            }
-            form1 = new Form1();
-            // Tutorial
-            Console.OutputEncoding = System.Text.Encoding.Unicode;
-            Console.WriteLine("speech-to-windows-input (made by j3soon)");
-            Console.WriteLine("1. Press Alt+H to convert speech to text input. The recognition stops on (1) microphone silence (2) after 15 seconds (3) Alt+H is pressed again.");
-            Console.WriteLine("2. Press ESC to cancel the on-going speech recognition (no input will be generated).");
-            Console.WriteLine("3. Press Ctrl+C to exit.");
-            Console.WriteLine("Notes:");
-            Console.WriteLine("- The default microphone & internet connection is used for speech recognition.");
-            Console.WriteLine("- If input fails for certain applications, you may need to launch this program with `Run as administrator`.");
-            Console.WriteLine("- The initial recognition delay is for detecting the language used. You can modify the language list to contain only a single language to speed up the process.");
-            // Generate and Load Config
-            if (!LoadConfig())
-            {
-                Console.WriteLine("Press any key to exit.");
-                Console.ReadKey();
-                return;
-            }
-            // Install Keyboard Hook and Callbacks
-            kbdHook.KeyDownEvent += kbdHook_KeyDownEvent;
-            kbdHook.KeyUpEvent += kbdHook_KeyUpEvent;
-            kbdHook.InstallGlobalHook();
-            Console.CancelKeyPress += Console_CancelKeyPress;
-            // Set up watcher for config hot reload
-            var watcher = new FileSystemWatcher(AppDomain.CurrentDomain.BaseDirectory);
-            watcher.NotifyFilter = NotifyFilters.LastWrite;
-            watcher.Filter = "config*.json";
-            watcher.Changed += (s, e) =>
-            {
-                if (e.Name !=getConfigFilename())
+                // Mutex lock for running only one instance of the program
+                var assembly = typeof(Program).Assembly;
+                var attribute = (GuidAttribute)assembly.GetCustomAttributes(typeof(GuidAttribute), true)[0];
+                var guid = attribute.Value;
+                // The mutex will be released by the OS when application exit / crash
+                var mutex = new Mutex(true, guid);
+                if (!mutex.WaitOne(TimeSpan.Zero, true))
+                {
+                    Console.WriteLine("Another Instance of this Program is Already Running.");
+                    Console.WriteLine("Press any key to exit.");
+                    Console.ReadKey();
                     return;
-                // May fire twice when using Notepad
-                // See https://stackoverflow.com/q/1764809/3917161
-                Console.WriteLine($"[{DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss")}] Config File is Modified, Reloading...");
-                shouldReloadConfig = true;
-            };
-            watcher.EnableRaisingEvents = true;
-            // Init Speech Recognizer
-            InitSpeechRecognizer();
-            Thread thread = new Thread(SendInputWorker);
-            thread.Start();
-            // Message Loop with Windows.Forms for simplicity (instead of custom WindowProc callback)
-            while (loop)
-            {
-                Application.DoEvents(); // Deal with Low Level Hooks Callback
-                if (stopwatch != null && stopwatch.ElapsedMilliseconds >= config.TotalTimeoutMS)
-                {
-                    // stopwatch != null means:
-                    // - continuousRecognition == true
-                    // - recognizing == true
-                    stopwatch.Stop();
-                    stopwatch = null;
-                    speechRecognizer.StopContinuousRecognitionAsync();
                 }
-                if (!recognizing && shouldReloadConfig)
+                form1 = new Form1();
+                // Tutorial
+                Console.OutputEncoding = System.Text.Encoding.Unicode;
+                Console.WriteLine("speech-to-windows-input (made by j3soon)");
+                Console.WriteLine("1. Press Alt+H to convert speech to text input. The recognition stops on (1) microphone silence (2) after 15 seconds (3) Alt+H is pressed again.");
+                Console.WriteLine("2. Press ESC to cancel the on-going speech recognition (no input will be generated).");
+                Console.WriteLine("3. Press Ctrl+C to exit.");
+                Console.WriteLine("Notes:");
+                Console.WriteLine("- The default microphone & internet connection is used for speech recognition.");
+                Console.WriteLine("- If input fails for certain applications, you may need to launch this program with `Run as administrator`.");
+                Console.WriteLine("- The initial recognition delay is for detecting the language used. You can modify the language list to contain only a single language to speed up the process.");
+                // Generate and Load Config
+                if (!LoadConfig())
                 {
-                    shouldReloadConfig = false;
-                    if (LoadConfig())
-                    {
-                        var suffix = (configId == 0 ? "" : configId.ToString());
-                        Console.WriteLine($"[{DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss")}] Config File Reloaded. ({getConfigFilename()})");
-                    }
-                    else
-                    {
-                        Console.WriteLine($"[{DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss")}] Config File Failed to Reload, Using Old Config.");
-                    }
-                    InitSpeechRecognizer();
+                    Console.WriteLine("Press any key to exit.");
+                    Console.ReadKey();
+                    return;
                 }
-                Thread.Sleep(1);
+                // Install Keyboard Hook and Callbacks
+                kbdHook.KeyDownEvent += kbdHook_KeyDownEvent;
+                kbdHook.KeyUpEvent += kbdHook_KeyUpEvent;
+                kbdHook.InstallGlobalHook();
+                Console.CancelKeyPress += Console_CancelKeyPress;
+                // Set up watcher for config hot reload
+                var watcher = new FileSystemWatcher(AppDomain.CurrentDomain.BaseDirectory);
+                watcher.NotifyFilter = NotifyFilters.LastWrite;
+                watcher.Filter = "config*.json";
+                watcher.Changed += (s, e) =>
+                {
+                    if (e.Name !=getConfigFilename())
+                        return;
+                    // May fire twice when using Notepad
+                    // See https://stackoverflow.com/q/1764809/3917161
+                    Console.WriteLine($"[{DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss")}] Config File is Modified, Reloading...");
+                    shouldReloadConfig = true;
+                };
+                watcher.EnableRaisingEvents = true;
+                // Init Speech Recognizer
+                InitSpeechRecognizer();
+                Thread thread = new Thread(SendInputWorker);
+                thread.Start();
+                // Message Loop with Windows.Forms for simplicity (instead of custom WindowProc callback)
+                while (loop)
+                {
+                    Application.DoEvents(); // Deal with Low Level Hooks Callback
+                    if (stopwatch != null && stopwatch.ElapsedMilliseconds >= config.TotalTimeoutMS)
+                    {
+                        // stopwatch != null means:
+                        // - continuousRecognition == true
+                        // - recognizing == true
+                        stopwatch.Stop();
+                        stopwatch = null;
+                        speechRecognizer.StopContinuousRecognitionAsync();
+                    }
+                    if (!recognizing && shouldReloadConfig)
+                    {
+                        shouldReloadConfig = false;
+                        if (LoadConfig())
+                        {
+                            var suffix = (configId == 0 ? "" : configId.ToString());
+                            Console.WriteLine($"[{DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss")}] Config File Reloaded. ({getConfigFilename()})");
+                        }
+                        else
+                        {
+                            Console.WriteLine($"[{DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss")}] Config File Failed to Reload, Using Old Config.");
+                        }
+                        InitSpeechRecognizer();
+                    }
+                    Thread.Sleep(1);
+                }
+                thread.Abort();
+                mutex.ReleaseMutex();
             }
-            thread.Abort();
-            // Uninstall Ketboard Hook
-            kbdHook.UninstallGlobalHook();
-            mutex.ReleaseMutex();
+            catch (Exception e)
+            {
+                var banner = new String('=', 25);
+                Console.WriteLine("");
+                Console.WriteLine(banner + "========== FATAL ERROR! ==========" + banner);
+                Console.WriteLine("");
+                Console.WriteLine(e.Message);
+                Console.WriteLine(e.ToString());
+                Console.WriteLine("");
+                Console.WriteLine("A fatal error occured. If you cannot resolve the problem by yourself, please open an issue in the following link:");
+                Console.WriteLine("");
+                Console.WriteLine("    https://github.com/j3soon/speech-to-windows-input/issues");
+                Console.WriteLine("");
+                Console.WriteLine("Please include the error message above and provide some description about the error.");
+                Console.WriteLine("");
+                Console.WriteLine("Press ENTER to exit.");
+            }
+            finally
+            {
+                // If the keyboard hook isn't uninstalled here when an error occurs, the user's keyboard will lag until program exit.
+                // Uninstall Ketboard Hook
+                kbdHook.UninstallGlobalHook();
+            }
+            Console.ReadLine();
         }
         static String getConfigFilename()
         {
@@ -429,7 +455,7 @@ namespace speech_to_windows_input
             speechConfig.SetProperty(PropertyId.SpeechServiceConnection_SingleLanguageIdPriority, config.PrioritizeLatencyOrAccuracy);
             // Output detailed recognition results
             speechConfig.OutputFormat = OutputFormat.Detailed;
-            // Don't filter bad words
+            // Don't filter bad wor s
             speechConfig.SetProfanity(ProfanityOption.Raw);
             if (!config.AutoPunctuation)
                 // Preview feature, mentioned here: https://github.com/Azure-Samples/cognitive-services-speech-sdk/issues/667#issuecomment-690840772
