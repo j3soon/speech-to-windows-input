@@ -142,10 +142,16 @@ Make sure to replace `<paste-your-subscription-key>` and `<paste-your-region>` t
 ## Program Hint
 
 ```
-speech-to-windows-input (made by j3soon)
+speech-to-windows-input (STWI) %VERSION_STRING%
+
+Source Code Link (MIT License):
+
+    https://github.com/j3soon/speech-to-windows-input
+
 1. Press Alt+H to convert speech to text input. The recognition stops on (1) microphone silence (2) after 15 seconds (3) Alt+H is pressed again.
 2. Press ESC to cancel the on-going speech recognition (no input will be generated).
 3. Press Ctrl+C to exit.
+
 Notes:
 - The default microphone & internet connection is used for speech recognition.
 - If input fails for certain applications, you may need to launch this program with `Run as administrator`.
@@ -155,6 +161,7 @@ Notes:
 ## Side Notes
 
 Runtime:
+- If the program seems stuck while performing speech recognition, it may be caused by unstable internet or microphone connection. Please restart the program.
 - If Unicode characters (e.g., Chinese) cannot be shown correctly, you should set the console font to support Unicode.
 - If you don't want your credit card be accidentally charged, set the Pricing Tier to `Free F0` instead of `Standard F0` (Pay as You Go). The free tier has [5 hours audio quota each month](https://azure.microsoft.com/en-us/pricing/details/cognitive-services/speech-services/), and will not charge you when exceeding the quota limit.
 

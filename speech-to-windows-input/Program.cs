@@ -56,6 +56,7 @@ namespace speech_to_windows_input
         static uint configId = 0;
         static String partialRecognizedText = "";
         static Stopwatch stopwatch = null;
+        static String version = "%VERSION_STRING%";
         static ConcurrentQueue<Tuple<String, String>> inputQueue = new ConcurrentQueue<Tuple<String, String>>();
         static Form1 form1;
         static void Main(string[] args)
@@ -66,7 +67,8 @@ namespace speech_to_windows_input
                 var assembly = typeof(Program).Assembly;
                 var attribute = (GuidAttribute)assembly.GetCustomAttributes(typeof(GuidAttribute), true)[0];
                 var fvi = System.Diagnostics.FileVersionInfo.GetVersionInfo(assembly.Location);
-                var version = fvi.FileVersion;
+                version = fvi.FileVersion;
+                version = version.Remove(version.Length - 2);  // Remove the trailing ".0"
                 var guid = attribute.Value;
                 // The mutex will be released by the OS when application exit / crash
                 var mutex = new Mutex(true, guid);
@@ -80,12 +82,9 @@ namespace speech_to_windows_input
                 form1 = new Form1();
                 // Tutorial
                 Console.OutputEncoding = System.Text.Encoding.Unicode;
-                Console.WriteLine("speech-to-windows-input (STWI) v" + version.Remove(version.Length - 2));
-                Console.WriteLine("");
-                Console.WriteLine("Source Code Link (MIT License):");
-                Console.WriteLine("");
-                Console.WriteLine("    https://github.com/j3soon/speech-to-windows-input");
-                Console.WriteLine("");
+                Console.WriteLine("speech-to-windows-input (STWI) v" + version + "\n");
+                Console.WriteLine("Source Code Link (MIT License):\n");
+                Console.WriteLine("    https://github.com/j3soon/speech-to-windows-input \n");
                 Console.WriteLine("1. Press Alt+H to convert speech to text input. The recognition stops on (1) microphone silence (2) after 15 seconds (3) Alt+H is pressed again.");
                 Console.WriteLine("2. Press ESC to cancel the on-going speech recognition (no input will be generated).");
                 Console.WriteLine("3. Press Ctrl+C to exit.");
@@ -159,29 +158,63 @@ namespace speech_to_windows_input
             }
             catch (Exception e)
             {
-                var banner = new String('=', 25);
-                Console.WriteLine("");
-                Console.WriteLine(banner + "========== FATAL ERROR! ==========" + banner);
-                Console.WriteLine("");
-                Console.WriteLine(e.Message);
-                Console.WriteLine(e.ToString());
-                Console.WriteLine("");
-                Console.WriteLine("A fatal error occured. If you cannot resolve the problem by yourself, please open an issue in the following link:");
-                Console.WriteLine("");
-                Console.WriteLine("    https://github.com/j3soon/speech-to-windows-input/issues");
-                Console.WriteLine("");
-                Console.WriteLine("Please include the error message above and provide some description about the error.");
-                Console.WriteLine("");
-                Console.WriteLine("Press ENTER to exit.");
+                ReportError(e.Message, e.ToString());
             }
             finally
             {
                 // If the keyboard hook isn't uninstalled here when an error occurs, the user's keyboard will lag until program exit.
-                // Uninstall Ketboard Hook
-                kbdHook.UninstallGlobalHook();
+                if (kbdHook.hookInstalled)
+                {
+                    // Uninstall Ketboard Hook
+                    kbdHook.UninstallGlobalHook();
+                }
             }
             Console.ReadLine();
         }
+
+        static void ReportError(String message, String description, bool fatal=true)
+        {
+            var banner = new String('=', 35);
+            var prefix = fatal ? " FATAL" : "";
+            Console.WriteLine("\n" + banner + prefix + " ERROR! " + banner + "\n");
+            if (!fatal)
+            {
+                // Error during recognition, not fatal.
+                Console.WriteLine("The author (j3soon) thinks that the issue may be:\n");
+                Console.Write("    - You didn't fill in your subscription info (`AzureSubscriptionKey` and `AzureServiceRegion`) in `config.json` after downloading the program. ");
+                Console.WriteLine("Or you used up all your quota, or the keys have expired.");
+                Console.WriteLine("    - Your internet connection dropped, or the connection is unstable.");
+                Console.WriteLine("    - Your microphone is unplugged, or the connection is unstable.\n");
+            }
+            else
+            {
+                Console.WriteLine(message);
+                Console.WriteLine(description);
+                Console.WriteLine("speech-to-windows-input (STWI) v" + version + "\n");
+                Console.Write("A fatal error occured. ");
+                if (message.Contains("SPXERR_MIC_NOT_AVAILABLE"))
+                {
+                    Console.WriteLine("The author (j3soon) thinks that the issue may be:\n");
+                    Console.WriteLine("    You didn't plugin a microphone. Or you system cannot detect your microphone.\n");
+                }
+                else if (message.Contains("Unable to load DLL"))
+                {
+                    Console.WriteLine("The author (j3soon) thinks that the issue may be:\n");
+                    Console.WriteLine("    The program is not able to locate the required `DLL` files. You may accidentally moved `speech-to-windows-input.exe` outside its folder. Please backup your `config.json` file and re-download the program:\n");
+                    Console.WriteLine("    https://github.com/j3soon/speech-to-windows-input/releases \n");
+                }
+                else if (message.Contains("Custom Exception thrown by the author"))
+                {
+                    Console.WriteLine("The author (j3soon) thinks that the issue may be:\n");
+                    Console.WriteLine("    You didn't fill in your subscription info (`AzureSubscriptionKey` and `AzureServiceRegion`) in `config.json` after downloading the program.\n");
+                }
+            }
+            Console.WriteLine("If you cannot resolve the problem by yourself, please open an issue and provide the error message and other details:\n");
+            Console.WriteLine("    https://github.com/j3soon/speech-to-windows-input/issues \n");
+            if (fatal)
+                Console.WriteLine("Press ENTER to exit.");
+        }
+
         static String getConfigFilename()
         {
             var suffix = (configId == 0 ? "" : configId.ToString());
@@ -214,8 +247,11 @@ namespace speech_to_windows_input
                 Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
                 WriteIndented = true,
             });
-            Console.WriteLine("Your current configuration: " + jsonConfig);
-            Console.WriteLine("");
+            Console.WriteLine("Your current configuration: " + jsonConfig + "\n");
+            if (config.AzureSubscriptionKey == "<paste-your-subscription-key>")
+                throw new Exception("Custom Exception thrown by the author: `AzureSubscriptionKey` is not set");
+            if (config.AzureServiceRegion == "<paste-your-region>")
+                throw new Exception("Custom Exception thrown by the author: `AzureServiceRegion` is not set");
             return true;
         }
         private static void Console_CancelKeyPress(object sender, ConsoleCancelEventArgs e)
@@ -531,7 +567,7 @@ namespace speech_to_windows_input
                     {
                         Console.WriteLine($"CANCELED: ErrorCode={cancellation.ErrorCode}");
                         Console.WriteLine($"CANCELED: ErrorDetails={cancellation.ErrorDetails}");
-                        Console.WriteLine($"CANCELED: Did you update the subscription info?");
+                        ReportError(cancellation.ErrorCode.ToString(), cancellation.ErrorDetails, false);
                     }
                 }
                 if (Text != null)
@@ -551,7 +587,7 @@ namespace speech_to_windows_input
                 {
                     Console.WriteLine($"CANCELED: ErrorCode={e.ErrorCode}");
                     Console.WriteLine($"CANCELED: ErrorDetails={e.ErrorDetails}");
-                    Console.WriteLine($"CANCELED: Did you update the speech key and location/region info?");
+                    ReportError(e.ErrorCode.ToString(), e.ErrorDetails, false);
                 }
                 // Re-initialize to fix temporary internet issue.
                 InitSpeechRecognizer();
