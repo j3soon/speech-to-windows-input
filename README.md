@@ -6,12 +6,14 @@ Supports English, Chinese, Japanese, [and more...](https://docs.microsoft.com/en
 
 ## Why this Project?
 
-- Windows [Speech Recognition](https://support.microsoft.com/en-au/windows/use-voice-typing-to-talk-instead-of-type-on-your-pc-fec94565-c4bd-329d-e59a-af033fa5689f) (``Win+H``) only supports English.
-- Although the old [Speech Recognition](https://www.windowscentral.com/how-set-speech-recognition-windows-10) tool supports Chinese and more languages, the recognition accuracy is very bad.
+- Windows 10 [Speech Recognition](https://support.microsoft.com/en-au/windows/use-voice-typing-to-talk-instead-of-type-on-your-pc-fec94565-c4bd-329d-e59a-af033fa5689f) (``Win+H``) only supports English.
+- Although the old [Speech Recognition](https://www.windowscentral.com/how-set-speech-recognition-windows-10) tool in Windows 10 supports Chinese and more languages, the recognition accuracy is very bad.
 - [Office 365 Speech Recognition](https://support.microsoft.com/en-us/office/dictate-your-documents-in-word-3876e05f-3fcc-418f-b8ab-db7ce0d11d3c) (``Alt+` ``) supports English, Chinese, Japanese and more languages. The recognition accuracy (especially for Chinese) is really good. Unfortunately, it only works in Office 365 applications and requires an Office 365 subscription. (Not free)
 - Microsoft didn't implement the Office 365 Speech Recognition function in Windows.
 
 So I decided to implement a free & open-source speech recognition tool that works on all applications on Windows.
+
+> **Update**: If your machine can be upgraded to Windows 11, the built-in speech recognition tool (``Win+H``) now supports more languages and could be considered a valid alternative to this project.
 
 ## Why Use Azure Speech Service as Backend?
 
