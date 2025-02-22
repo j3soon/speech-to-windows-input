@@ -92,7 +92,8 @@ namespace speech_to_windows_input
                 Console.WriteLine("Notes:");
                 Console.WriteLine("- The default microphone & internet connection is used for speech recognition.");
                 Console.WriteLine("- If input fails for certain applications, you may need to launch this program with `Run as administrator`.");
-                Console.WriteLine("- The initial recognition delay is for detecting the language used. You can modify the language list to contain only a single language to speed up the process.");
+                Console.WriteLine("- The initial recognition delay is for detecting the language used if the language list contain more than one language.");
+                Console.WriteLine("- Consider enabling `UseSwitchConfigKey` to allow switching between config files by Alt+<NUM>.");
                 Console.WriteLine("");
                 // Generate and Load Config
                 if (!LoadConfig())
