@@ -21,7 +21,7 @@ namespace speech_to_windows_input
         public String AzureSubscriptionKey { get; set; } = "<paste-your-subscription-key>";
         public String AzureServiceRegion { get; set; } = "<paste-your-region>"; // (e.g., "westus" or "eastasia")
         // All languages ref: https://docs.microsoft.com/en-us/azure/cognitive-services/speech-service/language-support#speech-to-text
-        public String[] Languages { get; set; } = { "en-US", "zh-TW" };
+        public String[] Languages { get; set; } = { "en-US" };
         public String[] PhraseList { get; set; } = { };
         public String PrioritizeLatencyOrAccuracy { get; set; } = "Latency";
         public bool SoundEffect { get; set; } = false;
