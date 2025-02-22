@@ -469,7 +469,7 @@ namespace speech_to_windows_input
         {
             while (true)
             {
-                Thread.Sleep(1); // Change busy-waiting to sleep & wake-up
+                // TODO: Change busy-waiting to sleep & wake-up
                 Tuple<String, String> tuple;
                 if (!inputQueue.TryDequeue(out tuple))
                     continue;
