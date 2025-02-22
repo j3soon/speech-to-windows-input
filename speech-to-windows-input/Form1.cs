@@ -55,13 +55,18 @@ namespace speech_to_windows_input
                 // Make sure Top Most property on form is set to false
                 // Ref: https://www.codeproject.com/Articles/12877/Transparent-Click-Through-Forms
                 // Ref: https://stackoverflow.com/a/10727337
+                // Ref: https://stackoverflow.com/a/157843/3917161
                 const int WS_EX_LAYERED = 0x80000;
                 const int WS_EX_TRANSPARENT = 0x20;
                 const int WS_EX_TOPMOST = 0x8;
+                const int WS_EX_NOACTIVATE = 0x08000000;
+                const int WS_EX_TOOLWINDOW = 0x00000080;
                 CreateParams cp = base.CreateParams;
                 cp.ExStyle |= WS_EX_LAYERED;
                 cp.ExStyle |= WS_EX_TRANSPARENT;
                 cp.ExStyle |= WS_EX_TOPMOST;
+                cp.ExStyle |= WS_EX_NOACTIVATE;
+                cp.ExStyle |= WS_EX_TOOLWINDOW;
                 return cp;
             }
         }
