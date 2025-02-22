@@ -52,8 +52,6 @@ With `"Languages": ["zh-TW"]`:
 
 ![](docs/images/demo-zh_TW.gif)
 
-> The latest version has much faster keyboard input speed than the GIFs above.
-
 Note: If your current input language is set to Chinese, you can select characters after performing speech recognition.
 
 ## Features:
