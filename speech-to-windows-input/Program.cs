@@ -151,7 +151,6 @@ namespace speech_to_windows_input
                         }
                         InitSpeechRecognizer();
                     }
-                    Thread.Sleep(1);
                 }
                 thread.Abort();
                 mutex.ReleaseMutex();
